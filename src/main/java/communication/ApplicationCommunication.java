@@ -51,7 +51,8 @@ public class ApplicationCommunication {
     /****************************************
      * 共通送信
      ****************************************/
-    private void send(String json) {
+    public void send(AppMessage msg) {
+        String json = gson.toJson(msg, AppMessage.class);
         if (!isConnected()) {
             System.out.println("[Application] not connected");
             return;

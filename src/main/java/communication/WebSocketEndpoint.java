@@ -34,7 +34,7 @@ public class WebSocketEndpoint {
 
         switch (type) {
 
-            case "login_result":
+            case "LOGIN_SUCCES":
                 LoginResultMessage login =
                         gson.fromJson(message, LoginResultMessage.class);
                 controller.handleLoginResult(login);
@@ -51,6 +51,20 @@ public class WebSocketEndpoint {
                         gson.fromJson(message, MatchingResultMessage.class);
                 controller.handleMatchingResult(match);
                 break;
+
+
+
+
+
+            case "START":
+                AppMessage msg = gson.fromJson(message, AppMessage.class);
+                controller.updateBattleStatus(msg.players);
+
+            case "BET":
+                controller.showMessage("bet phase");
+//あとで考える
+
+
 
             default:
                 System.out.println("unknown message type: " + type);
