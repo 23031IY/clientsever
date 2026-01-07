@@ -1,13 +1,12 @@
 package control;
 
 import communication.ClientCommunication;
-import communication.message.LoginInfoMessage;
-import communication.message.LoginResultMessage;
-import jakarta.websocket.Session;
-import communication.message.MatchingResultMessage;
+import communication.message.*;
 import doundary.*;
 
 public class ClientController {
+
+    private String id;
 
     /* ネットワーク */
     public ClientCommunication clientCommunication;
@@ -70,8 +69,8 @@ public class ClientController {
 
     public void sendLoginRequest(String id, String password) {
 
-        LoginInfoMessage loginMessage =
-                new LoginInfoMessage(id, password);
+        LoginReqMessage loginMessage =
+                new LoginReqMessage(id, password);
 
         clientCommunication.sendLoginRequest(loginMessage);
     }
@@ -91,19 +90,40 @@ public class ClientController {
         }
     }
 
+    public void sendSignUpRequest(String id, String pass) {
+        SignUpReqMessage msg = new SignUpReqMessage("SignUp", id, pass);
+        clientCommunication.sendSignUpRequest(msg);
+    }
+
+    public void handleSignUpResult(SignUpResultMessage result) {
+
+        if (result.success) {
+            System.out.println("登録成功");
+            // ホーム画面へ
+            transitionToHomeScreen();
+
+        } else {
+            System.out.println("登録失敗");
+
+            currentScreen.showMessage(
+                    "登録失敗: " + result.errorMessage);
+        }
+    }
+
 
     /****************************************
      * ログアウト
      ****************************************/
     public void executeLogout() {
+        clientCommunication.sendLogoutRequest();
     }
 
     /****************************************
      * マッチング開始
      ****************************************/
     public void notifyStartMatching() {
-        clientCommunication.sendMatchRequest();
-
+        MatchingReqMessage msg = new MatchingReqMessage();
+        clientCommunication.sendMatchRequest(msg);
     }
 
     public void handleMatchingResult(MatchingResultMessage result) {
@@ -130,4 +150,6 @@ public class ClientController {
 
     public void handleScreenTransition() {
     }
+
+
 }

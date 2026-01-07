@@ -1,9 +1,10 @@
 package communication;
 
 import com.google.gson.Gson;
-import communication.message.LoginInfoMessage;
+import communication.message.LoginReqMessage;
+import communication.message.LogoutReqMessage;
 import communication.message.MatchingReqMessage;
-import communication.WebSocket.WebSocketEndpoint;
+import communication.message.SignUpReqMessage;
 import control.ClientController;
 import jakarta.websocket.ContainerProvider;
 import jakarta.websocket.Session;
@@ -59,13 +60,22 @@ public class ClientCommunication {
     }
 
     /* ログイン要求 */
-    public void sendLoginRequest(LoginInfoMessage msg) {
+    public void sendLoginRequest(LoginReqMessage msg) {
         send(gson.toJson(msg));
     }
 
     /* マッチング要求 */
-    public void sendMatchRequest() {
-        MatchingReqMessage msg = new MatchingReqMessage();
+    public void sendMatchRequest(MatchingReqMessage msg) {
+        send(gson.toJson(msg));
+    }
+
+    public void sendSignUpRequest(SignUpReqMessage msg){
+        send(gson.toJson(msg));
+    }
+
+    /* ログアウト要求 */
+    public void sendLogoutRequest(){
+        LogoutReqMessage msg = new LogoutReqMessage(session.getId());
         send(gson.toJson(msg));
     }
 }

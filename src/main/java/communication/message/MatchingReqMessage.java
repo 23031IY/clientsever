@@ -6,6 +6,5 @@ public class MatchingReqMessage {
 
 
     public MatchingReqMessage() {
-        this.id = id;
     }
 }

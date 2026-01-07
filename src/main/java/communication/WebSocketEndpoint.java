@@ -1,8 +1,7 @@
-package communication.WebSocket;
+package communication;
 
 import com.google.gson.*;
-import communication.message.LoginResultMessage;
-import communication.message.MatchingResultMessage;
+import communication.message.*;
 import control.ClientController;
 import jakarta.websocket.*;
 
@@ -39,6 +38,12 @@ public class WebSocketEndpoint {
                 LoginResultMessage login =
                         gson.fromJson(message, LoginResultMessage.class);
                 controller.handleLoginResult(login);
+                break;
+
+            case "SignUp":
+                SignUpResultMessage signUp =
+                        gson.fromJson(message, SignUpResultMessage.class);
+                controller.handleSignUpResult(signUp);
                 break;
 
             case "match_result":
