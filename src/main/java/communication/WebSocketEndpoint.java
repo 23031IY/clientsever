@@ -34,24 +34,29 @@ public class WebSocketEndpoint {
 
         switch (type) {
 
-            case "LOGIN_SUCCES":
+            case "LOGIN_SUCCES","LOGIN_FAILURE":
                 LoginResultMessage login =
                         gson.fromJson(message, LoginResultMessage.class);
                 controller.handleLoginResult(login);
                 break;
 
-            case "SignUp":
+            case "RESISTER_SUCCES","RESISTER_FAILURE":
                 SignUpResultMessage signUp =
                         gson.fromJson(message, SignUpResultMessage.class);
                 controller.handleSignUpResult(signUp);
                 break;
 
-            case "match_result":
+            case "MATCH_STATUS":
                 MatchingResultMessage match =
                         gson.fromJson(message, MatchingResultMessage.class);
                 controller.handleMatchingResult(match);
                 break;
 
+            case "LOGOUT_SUCCES":
+                //あとで
+
+            case "LOGOUT_FAILURE":
+                //やる
 
 
 
@@ -63,6 +68,21 @@ public class WebSocketEndpoint {
             case "BET":
                 controller.showMessage("bet phase");
 //あとで考える
+
+            case "STATE":
+                controller.showMessage("update state");
+                AppMessage msg1 = gson.fromJson(message, AppMessage.class);
+                controller.updateBattleStatus(msg1.players);
+
+            case "ERROR":
+                AppMessage msg2 = gson.fromJson(message, AppMessage.class);
+                controller.showMessage("error"+msg2.message);
+
+            case "ROLL":
+                AppMessage msg3 = gson.fromJson(message, AppMessage.class);
+                controller.showMessage("roll"+msg3.message);
+//後でちゃんとやる
+
 
 
 
