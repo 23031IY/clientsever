@@ -5,6 +5,8 @@ import communication.ClientCommunication;
 import communication.message.*;
 import doundary.*;
 
+import java.util.List;
+
 public class ClientController {
 
     private String id;
@@ -150,7 +152,8 @@ public class ClientController {
     public void sendBattleInfo() {
     }
 
-    public void updateBattleStatus() {
+    public void updateBattleStatus(List<AppMessage.PlayerState> playerStates) {
+        //aaaaaaaaaaaaaaaaaaaaaaaaa
     }
 
     public void handleScreenTransition() {
