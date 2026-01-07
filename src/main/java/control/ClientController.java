@@ -1,5 +1,6 @@
 package control;
 
+import communication.ApplicationCommunication;
 import communication.ClientCommunication;
 import communication.message.*;
 import doundary.*;
@@ -10,6 +11,7 @@ public class ClientController {
 
     /* ネットワーク */
     public ClientCommunication clientCommunication;
+    public ApplicationCommunication applicationCommunication;
 
     /* 現在表示中の画面 */
     protected Screen currentScreen;
@@ -24,8 +26,10 @@ public class ClientController {
     /****************************************
      * コンストラクタ
      ****************************************/
-    public ClientController(ClientCommunication network) {
-        this.clientCommunication = network;
+    public ClientController(ClientCommunication c, ApplicationCommunication a) {
+        this.clientCommunication = c;
+        this.applicationCommunication = a;
+
 
         // 各画面の生成
         loginScreen  = new LoginScreen(this);

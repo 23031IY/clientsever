@@ -78,4 +78,12 @@ public class ClientCommunication {
         LogoutReqMessage msg = new LogoutReqMessage(session.getId());
         send(gson.toJson(msg));
     }
+
+
+
+    public void disconnect() throws IOException {
+        if(!session.isOpen()) {
+            session.close();
+        }
+    }
 }

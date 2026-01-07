@@ -1,7 +1,7 @@
 package communication;
 
 import com.google.gson.Gson;
-import communication.WebSocket.WebSocketEndpoint;
+import communication.WebSocketEndpoint;
 import communication.message.*;
 import control.ClientController;
 import jakarta.websocket.ContainerProvider;
@@ -64,6 +64,15 @@ public class ApplicationCommunication {
         }
     }
 
+
+
+
+
+    public void disconnect() throws IOException {
+        if(!session.isOpen()) {
+            session.close();
+        }
+    }
 
 
 }
