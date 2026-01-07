@@ -6,6 +6,7 @@ public class LoginReqMessage {
     public String password;
 
     public LoginReqMessage(String id, String password) {
+        this.type = "LOGIN";
         this.id = id;
         this.password = password;
     }

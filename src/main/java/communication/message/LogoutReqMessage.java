@@ -1,9 +1,9 @@
 package communication.message;
 
 public class LogoutReqMessage {
-    private String sessionId;
+    public String type;  //    LOGOUT_SUCCES or
 
-    public LogoutReqMessage(String sessionId) {
-        this.sessionId = sessionId;
+    public LogoutReqMessage() {
+        this.type = "LOGOUT";
     }
 }

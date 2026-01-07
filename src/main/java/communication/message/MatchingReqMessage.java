@@ -1,10 +1,11 @@
 package communication.message;
 
 public class MatchingReqMessage {
-    public String type = "match_request";
-    public String id;
+    public String type;
+    public String id; //ユーザー名
 
 
     public MatchingReqMessage() {
+        this.type = "MATCHING";
     }
 }

@@ -95,7 +95,7 @@ public class ClientController {
     }
 
     public void sendSignUpRequest(String id, String pass) {
-        SignUpReqMessage msg = new SignUpReqMessage("SignUp", id, pass);
+        SignUpReqMessage msg = new SignUpReqMessage(id, pass);
         clientCommunication.sendSignUpRequest(msg);
     }
 

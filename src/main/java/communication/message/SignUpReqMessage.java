@@ -5,8 +5,8 @@ public class SignUpReqMessage {
     public String id;
     public String pass;
 
-    public SignUpReqMessage(String type, String id, String pass) {
-        this.type = type; //SignUp
+    public SignUpReqMessage(String id, String pass) {
+        this.type = "RESISTER";
         this.id = id;
         this.pass = pass;
     }

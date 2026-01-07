@@ -75,7 +75,7 @@ public class ClientCommunication {
 
     /* ログアウト要求 */
     public void sendLogoutRequest(){
-        LogoutReqMessage msg = new LogoutReqMessage(session.getId());
+        LogoutReqMessage msg = new LogoutReqMessage();
         send(gson.toJson(msg));
     }
 
