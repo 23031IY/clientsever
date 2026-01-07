@@ -8,6 +8,8 @@ public class ResultScreen extends Screen {
         super(controller);
     }
 
+    //HomeScreenに戻るメソッド
+
     public void showResultScreen() {
         System.out.println("=== 結果画面 ===");
     }

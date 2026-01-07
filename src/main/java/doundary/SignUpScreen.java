@@ -18,6 +18,10 @@ public class SignUpScreen extends Screen {
         controller.sendSignUpRequest(id, pass);
     }
 
+    public void onLoginButtonPressed(){
+        controller.transitionToLoginScreen();
+    }
+
     public boolean validateInput(String input) {
         return input != null && input.length() >= 3;
     }

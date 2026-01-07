@@ -120,6 +120,7 @@ public class ClientController {
      ****************************************/
     public void executeLogout() {
         clientCommunication.sendLogoutRequest();
+        transitionToLoginScreen();
     }
 
     /****************************************
