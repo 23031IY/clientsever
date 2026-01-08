@@ -12,7 +12,7 @@ public class BattleScreen extends Screen {
     }
 
     public void onRollDiceButtonPressed() {
-        //controller.sendBattleInfo();
+        controller.sendBattleInfo();
     }
 
 
@@ -21,9 +21,10 @@ public class BattleScreen extends Screen {
         controller.sendBattleInfo(betBanana);
     }
 
-    public void showRemainingTime() {
-        System.out.println("残り時間を表示");
+    public void showRemainingTime(int timer) {
+        System.out.println("残り時間を表示"+timer);
     }
+
 
     public void updateScreen(List<AppMessage.PlayerState> playerStates) {
         for (AppMessage.PlayerState ps : playerStates) {

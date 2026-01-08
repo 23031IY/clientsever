@@ -8,12 +8,11 @@ import jakarta.websocket.*;
 @ClientEndpoint
 public class WebSocketEndpoint {
 
-    private static Gson gson = new Gson();
-    private static ClientController controller;
+    private Gson gson = new Gson();
+    private ClientController controller;
 
-    // Controller を登録
-    public static void setController(ClientController c) {
-        controller = c;
+    public WebSocketEndpoint(ClientController controller) {
+        this.controller = controller;
     }
 
     @OnOpen
@@ -80,7 +79,7 @@ public class WebSocketEndpoint {
 
             case "ROLL":
                 AppMessage msg3 = gson.fromJson(message, AppMessage.class);
-                controller.showMessage("roll"+msg3.message);
+                controller.showMessage("roll phase");
 //後でちゃんとやる
 
 

@@ -35,14 +35,14 @@ public class ApplicationCommunication {
      ****************************************/
     private void connect() {
         try {
-            WebSocketEndpoint.setController(controller);
             session = container.connectToServer(
-                    new WebSocketEndpoint(), uri);
+                    new WebSocketEndpoint(controller), uri);
             System.out.println("[Application] connected");
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
 
     public boolean isConnected() {
         return session != null && session.isOpen();

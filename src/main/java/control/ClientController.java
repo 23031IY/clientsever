@@ -149,13 +149,22 @@ public class ClientController {
     /****************************************
      * バトル関連
      ****************************************/
+
+    // BET用の通信
     public void sendBattleInfo(int betBanana) {
         AppMessage msg = new AppMessage();
         msg.betBananas = betBanana;
         msg.type = AppMessage.Type.valueOf("BET");
-
         applicationCommunication.send(msg);
     }
+
+    // ROLL用の通信
+    public void sendBattleInfo(){
+        AppMessage msg = new AppMessage();
+        msg.type = AppMessage.Type.valueOf("ROLL");
+        applicationCommunication.send(msg);
+    }
+
 
     public void updateBattleStatus(List<AppMessage.PlayerState> players) {
         battleScreen.updateScreen(players);

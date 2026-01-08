@@ -29,9 +29,8 @@ public class ClientCommunication {
     /* 接続 */
     private boolean connect(ClientController controller) {
         try {
-            WebSocketEndpoint.setController(controller);
             session = container.connectToServer(
-                    new WebSocketEndpoint(), uri);
+                    new WebSocketEndpoint(controller), uri);
             System.out.println("[client] WebSocket connected");
             return true;
         } catch (Exception e) {
@@ -39,6 +38,7 @@ public class ClientCommunication {
             return false;
         }
     }
+
 
     /* 接続状態確認 */
     public boolean isConnected() {
