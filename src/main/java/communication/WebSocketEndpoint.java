@@ -60,9 +60,12 @@ public class WebSocketEndpoint {
 
 
 
+            // app server↓
+
             case "START":
                 AppMessage msg = gson.fromJson(message, AppMessage.class);
                 controller.updateBattleStatus(msg.players);
+                controller.showMessage("game start");
 
             case "BET":
                 controller.showMessage("bet phase");
@@ -73,17 +76,25 @@ public class WebSocketEndpoint {
                 AppMessage msg1 = gson.fromJson(message, AppMessage.class);
                 controller.updateBattleStatus(msg1.players);
 
-            case "ERROR":
+            case "ERROR":  //BET時のタイムアウト
                 AppMessage msg2 = gson.fromJson(message, AppMessage.class);
                 controller.showMessage("error"+msg2.message);
+                // BETと同じ処理
 
             case "ROLL":
                 AppMessage msg3 = gson.fromJson(message, AppMessage.class);
+                controller.showRollDisplay(msg3.playerId);
                 controller.showMessage("roll phase");
-//後でちゃんとやる
+
+            case "HAND":
+                AppMessage msg4 = gson.fromJson(message, AppMessage.class);
+                controller.showMessage("hand phase");
+//atode
 
 
-
+            case "RESULT":
+                AppMessage msg5 = gson.fromJson(message, AppMessage.class);
+// どれを使うか確認
 
             default:
                 System.out.println("unknown message type: " + type);

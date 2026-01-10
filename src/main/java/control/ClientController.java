@@ -9,8 +9,6 @@ import java.util.List;
 
 public class ClientController {
 
-    private String id;
-
     /* ネットワーク */
     public ClientCommunication clientCommunication;
     public ApplicationCommunication applicationCommunication;
@@ -157,6 +155,12 @@ public class ClientController {
         msg.type = AppMessage.Type.valueOf("BET");
         applicationCommunication.send(msg);
     }
+
+    public void showRollDisplay(int playerId){
+        System.out.println("ROLL PHASE : "+playerId);
+        //　int playerId番目のプレイヤのロール
+    }
+
 
     // ROLL用の通信
     public void sendBattleInfo(){

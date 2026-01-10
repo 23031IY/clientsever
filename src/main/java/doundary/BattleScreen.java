@@ -15,8 +15,6 @@ public class BattleScreen extends Screen {
         controller.sendBattleInfo();
     }
 
-
-
     public void bet(int betBanana){
         controller.sendBattleInfo(betBanana);
     }
