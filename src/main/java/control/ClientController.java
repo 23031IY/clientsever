@@ -1,5 +1,8 @@
 package control;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import communication.ApplicationCommunication;
 import communication.ClientCommunication;
 import communication.message.*;
@@ -12,6 +15,8 @@ public class ClientController {
     /* ネットワーク */
     public ClientCommunication clientCommunication;
     public ApplicationCommunication applicationCommunication;
+
+    private Gson gson = new Gson();
 
     /* 現在表示中の画面 */
     protected Screen currentScreen;
@@ -43,6 +48,71 @@ public class ClientController {
         loginScreen.showLoginScreen();
     }
 
+    // 通信
+    /* Application Server からの通知 */
+    public void onApplicationServerMessage(AppMessage msg) {
+        System.out.println("ApplicationServer: " + msg);
+        // 業務処理
+        switch (msg.type) {
+
+            case HELLO:
+                System.out.println("ApplicationServer 接続完了");
+                break;
+
+
+        }
+    }
+
+    // Client管理サーバから（JSON文字列）
+    public void onClientServerMessage(String message) {
+
+        System.out.println("[client] onMessage: " + message);
+
+        JsonObject json = JsonParser
+                .parseString(message)
+                .getAsJsonObject();
+        String type = json.get("type").getAsString();
+        // 業務処理
+        switch (type) {
+            case "LOGIN_SUCCES":
+            case "LOGIN_FAILURE": {
+                LoginResultMessage login =
+                        gson.fromJson(message, LoginResultMessage.class);
+                handleLoginResult(login);
+                break;
+            }
+
+            case "RESISTER_SUCCES":
+            case "RESISTER_FAILURE": {
+                SignUpResultMessage signUp =
+                        gson.fromJson(message, SignUpResultMessage.class);
+                handleSignUpResult(signUp);
+                break;
+            }
+            case "MATCH_STATUS":
+                MatchingResultMessage match =
+                        gson.fromJson(message, MatchingResultMessage.class);
+                handleMatchingResult(match);
+                break;
+
+            case "LOGOUT_SUCCES":
+                //あとで
+
+            case "LOGOUT_FAILURE":
+                //やる
+
+
+
+        }
+
+
+
+    }
+
+
+
+
+
     /****************************************
      * 画面遷移
      ****************************************/
@@ -71,12 +141,17 @@ public class ClientController {
         resultScreen.showResultScreen();
     }
 
+
+
+
+
+
     public void sendLoginRequest(String id, String password) {
 
-        LoginReqMessage loginMessage =
+        LoginReqMessage msg =
                 new LoginReqMessage(id, password);
 
-        clientCommunication.sendLoginRequest(loginMessage);
+        clientCommunication.sendLoginRequest(msg);
     }
 
     public void handleLoginResult(LoginResultMessage result) {

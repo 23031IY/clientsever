@@ -6,84 +6,56 @@ import communication.message.LogoutReqMessage;
 import communication.message.MatchingReqMessage;
 import communication.message.SignUpReqMessage;
 import control.ClientController;
-import jakarta.websocket.ContainerProvider;
 import jakarta.websocket.Session;
-import jakarta.websocket.WebSocketContainer;
-
-import java.io.IOException;
-import java.net.URI;
 
 public class ClientCommunication {
 
     private Session session;
-    private WebSocketContainer container;
-    private URI uri;
-    private Gson gson = new Gson();
+    private final Gson gson = new Gson();
+    private final ClientController controller;
 
-    public ClientCommunication(String endpoint, ClientController controller) {
-        container = ContainerProvider.getWebSocketContainer();
-        uri = URI.create(endpoint);
-        connect(controller);
+    public ClientCommunication(ClientController controller) {
+        this.controller = controller;
     }
 
-    /* 接続 */
-    private boolean connect(ClientController controller) {
-        try {
-            session = container.connectToServer(
-                    new WebSocketEndpoint(controller), uri);
-            System.out.println("[client] WebSocket connected");
-            return true;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
+    void setSession(Session session) {
+        this.session = session;
+    }
+
+    void handleClientMessage(String json) {
+        controller.onClientServerMessage(json);
+    }
+
+
+
+    // ↓送信用メソッド
+
+    public void send(String json) {
+        if (session != null && session.isOpen()) {
+            session.getAsyncRemote().sendText(json);
         }
     }
 
-
-    /* 接続状態確認 */
-    public boolean isConnected() {
-        return session != null && session.isOpen();
+    public void sendLoginRequest(LoginReqMessage loginMessage) {
+        String msg = gson.toJson(loginMessage);
+        send(msg);
     }
 
-    /* 共通送信 */
-    private void send(String json) {
-        if (!isConnected()) {
-            System.out.println("WebSocket is not connected");
-            return;
-        }
-        try {
-            session.getBasicRemote().sendText(json);
-            System.out.println("[client] send: " + json);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public void sendSignUpRequest(SignUpReqMessage signUpReqMessage) {
+        String msg = gson.toJson(signUpReqMessage);
+        send(msg);
     }
 
-    /* ログイン要求 */
-    public void sendLoginRequest(LoginReqMessage msg) {
-        send(gson.toJson(msg));
+    public void sendLogoutRequest() {
+        LogoutReqMessage logoutReqMessage = new LogoutReqMessage();
+        String msg = gson.toJson(logoutReqMessage);
+        send(msg);
     }
 
-    /* マッチング要求 */
-    public void sendMatchRequest(MatchingReqMessage msg) {
-        send(gson.toJson(msg));
+    public void sendMatchRequest(MatchingReqMessage matchingReqMessage) {
+        String msg = gson.toJson(matchingReqMessage);
+        send(msg);
     }
 
-    public void sendSignUpRequest(SignUpReqMessage msg){
-        send(gson.toJson(msg));
-    }
-
-    /* ログアウト要求 */
-    public void sendLogoutRequest(){
-        LogoutReqMessage msg = new LogoutReqMessage();
-        send(gson.toJson(msg));
-    }
-
-
-
-    public void disconnect() throws IOException {
-        if(!session.isOpen()) {
-            session.close();
-        }
-    }
 }
+
