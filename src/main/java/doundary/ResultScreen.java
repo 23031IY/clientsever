@@ -13,5 +13,11 @@ public class ResultScreen extends Screen {
     public void showResultScreen() {
         System.out.println("=== 結果画面 ===");
     }
+
+    // 結果表示
+    public void showResult(){
+
+    }
+
 }
 

@@ -12,6 +12,7 @@ public class AppMessage {
         ROLL,       // 1回目を振る
         REROLL,     // 振り直し
         CONFIRM,    // 確定
+        HAND,
 
         STATE,
         RESULT,

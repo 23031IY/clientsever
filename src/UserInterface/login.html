@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>チンチロリン - ログイン</title>
+
+    <style>
+        @font-face {
+            font-family: 'BananaSlip';
+            src: url('YDWbananaslipplus.otf') format('opentype');
+        }
+
+        body {
+            font-family: 'BananaSlip', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f7e7ce;
+            margin: 0;
+        }
+
+        .game-title {
+            font-size: 4rem;
+            text-align: center;
+            color: #ffcc00;
+            text-shadow: 4px 4px 0px #8b4513,
+            -1px -1px 0px #8b4513,
+            1px -1px 0px #8b4513,
+            -1px  1px 0px #8b4513,
+            1px  1px 0px #8b4513;
+            margin-bottom: 2rem;
+            letter-spacing: 5px;
+        }
+
+        .container {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            width: 380px;
+            border: 5px solid #8b4513;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 1.5rem;
+            border-bottom: 3px solid #ddd;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 0.7rem;
+            text-align: center;
+            cursor: pointer;
+            color: #999;
+            font-size: 1.2rem;
+        }
+
+        .tab.active {
+            color: #8b4513;
+            border-bottom: 4px solid #ffcc00;
+        }
+
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+            color: #555;
+        }
+
+        input {
+            font-family: 'BananaSlip', sans-serif;
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            box-sizing: border-box;
+            font-size: 1rem;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: #ffcc00;
+        }
+
+        button {
+            font-family: 'BananaSlip', sans-serif;
+            width: 100%;
+            padding: 1rem;
+            background-color: #8b4513;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            margin-top: 1rem;
+            font-size: 1.3rem;
+            transition: all 0.2s;
+            box-shadow: 0 4px 0px #5d2e0d;
+        }
+
+        .error-message {
+            color: red;
+            font-size: 0.9rem;
+            margin-top: 0.8rem;
+            display: none;
+            text-align: center;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+<div>
+    <h1 class="game-title">チンチロリン</h1>
+
+    <div class="container">
+        <div class="tabs">
+            <div id="loginTab" class="tab active" onclick="switchTab('login')">ログイン</div>
+            <div id="signupTab" class="tab" onclick="switchTab('signup')">新規登録</div>
+        </div>
+
+        <div id="loginForm">
+            <div class="form-group">
+                <label>ユーザ名</label>
+                <input id="loginId">
+            </div>
+            <div class="form-group">
+                <label>パスワード</label>
+                <input type="password" id="loginPass">
+            </div>
+            <button onclick="login()">ログイン</button>
+        </div>
+
+        <div id="signupForm" class="hidden">
+            <div class="form-group">
+                <label>ユーザ名</label>
+                <input id="signupId">
+            </div>
+            <div class="form-group">
+                <label>パスワード</label>
+                <input type="password" id="signupPass">
+            </div>
+            <button onclick="signup()">登録する！</button>
+        </div>
+
+        <div id="msgDisplay" class="error-message"></div>
+    </div>
+</div>
+
+<script type="module">
+    import { connect, send, showMessage } from "./app.js";
+
+    /* ===== LoginScreen 相当 ===== */
+    const LoginScreen = {
+        login(id, pass) {
+            if (id.length < 3 || pass.length < 3) {
+                this.msg("ID または パスワードが不正です");
+                return;
+            }
+            send({ type: "LOGIN", id, password: pass });
+            this.msg("ログイン中...");
+        },
+
+        signup(id, pass) {
+            if (id.length < 3 || pass.length < 3) {
+                this.msg("ID または パスワードが不正です");
+                return;
+            }
+            send({ type: "RESISTER", id, pass });
+            this.msg("登録中...");
+        },
+
+        msg(text) {
+            showMessage("msgDisplay", text);
+        }
+    };
+
+    connect((message) => {
+        const json = JSON.parse(message);
+
+        if (json.type === "LOGIN_SUCCES") {
+            sessionStorage.setItem("userId", loginId.value);
+            location.href = "home.html";
+        }
+        if (json.type === "LOGIN_FAILURE") {
+            LoginScreen.msg("ログイン失敗");
+        }
+        if (json.type === "RESISTER_SUCCES") {
+            sessionStorage.setItem("userId", signupId.value);
+            location.href = "home.html";
+        }
+        if (json.type === "RESISTER_FAILURE") {
+            LoginScreen.msg("登録失敗");
+        }
+    });
+
+    /* ===== HTML用 ===== */
+    window.login = () =>
+        LoginScreen.login(loginId.value, loginPass.value);
+
+    window.signup = () =>
+        LoginScreen.signup(signupId.value, signupPass.value);
+
+    window.switchTab = (type) => {
+        const isLogin = type === "login";
+        loginForm.classList.toggle("hidden", !isLogin);
+        signupForm.classList.toggle("hidden", isLogin);
+        loginTab.classList.toggle("active", isLogin);
+        signupTab.classList.toggle("active", !isLogin);
+        msgDisplay.style.display = "none";
+    };
+</script>
+</body>
+</html>

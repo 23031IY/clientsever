@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>チンチロリン - ホーム</title>
+
+    <style>
+        body {
+            font-family: 'BananaSlip', sans-serif;
+            background-color: #f7e7ce;
+            margin: 0;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 3rem;
+            color: #ffcc00;
+            text-shadow: 3px 3px 0px #8b4513;
+        }
+
+        button {
+            padding: 1rem 2rem;
+            font-size: 1.2rem;
+            border-radius: 30px;
+            border: none;
+            background-color: #8b4513;
+            color: white;
+            cursor: pointer;
+            margin: 1rem;
+        }
+
+        .user-panel {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            background-color: #deb887;
+            border: 4px solid #8b4513;
+            padding: 10px 16px;
+            border-radius: 12px;
+        }
+    </style>
+</head>
+
+<body>
+<h1>チンチロリン</h1>
+
+<button onclick="match()">群れに合流する</button>
+
+<div class="user-panel">
+    <span id="username"></span>
+    <button onclick="logout()">ログアウト</button>
+</div>
+
+<script type="module">
+    import { connect, send } from "./app.js";
+
+    /* ===== HomeScreen 相当 ===== */
+    const HomeScreen = {
+        match() {
+            send({
+                type: "MATCHING",
+                id: sessionStorage.getItem("userId")
+            });
+            alert("マッチング中...");
+        },
+
+        logout() {
+            send({ type: "LOGOUT" });
+        }
+    };
+
+    document.getElementById("username").textContent =
+        sessionStorage.getItem("userId");
+
+    connect((message) => {
+        const json = JSON.parse(message);
+
+        if (json.type === "MATCH_STATUS" && json.success) {
+            location.href = "battle.html";
+        }
+
+        if (json.type === "LOGOUT_SUCCES") {
+            sessionStorage.clear();
+            location.href = "login.html";
+        }
+    });
+
+    /* ===== HTML用 ===== */
+    window.match = () => HomeScreen.match();
+    window.logout = () => HomeScreen.logout();
+</script>
+</body>
+</html>
