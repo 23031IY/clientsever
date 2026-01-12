@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @font-face {
+            font-family: 'BananaSlip';
+            src: url('YDWbananaslipplus.otf') format('opentype');
+        }
+
+        body {
+            font-family: 'BananaSlip', sans-serif;
+            background-color: #f7e7ce;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        .timer-display {
+            font-size: 2rem;
+            color: #e74c3c;
+            background: white;
+            padding: 5px 20px;
+            border: 3px solid #e74c3c;
+            border-radius: 50px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .boss-order { position: absolute; top: 20px; right: 20px; background: white; border: 2px solid #8b4513; padding: 10px; border-radius: 10px; z-index: 10; }
+        .boss-order-title { font-size: 0.8rem; border-bottom: 1px solid #ddd; margin-bottom: 5px; }
+        .boss-user { font-size: 0.9rem; padding: 2px 5px; }
+        .is-current-boss-text { color: #d35b31; font-weight: bold; }
+
+        .dice-container { display: flex; gap: 15px; margin-top: 10px; margin-bottom: 30px; }
+        .dice { width: 80px; height: 80px; background: #ccc; border: 2px solid #555; display: flex; justify-content: center; align-items: center; font-size: 3rem; box-shadow: 4px 4px 0px rgba(0,0,0,0.1); }
+
+        .roll-button { font-family: 'BananaSlip', sans-serif; background-color: #a7c1e1; border: 2px solid #555; border-radius: 10px; padding: 10px 30px; font-size: 1.5rem; cursor: pointer; box-shadow: 0 4px 0 #7a8ea6; margin-bottom: 10px; outline: none; }
+        .roll-button:disabled { background-color: #999 !important; cursor: not-allowed; opacity: 0.7; box-shadow: none; }
+
+        .roll-count-display { font-size: 1.2rem; color: #8b4513; margin-bottom: 20px; }
+
+        .players-container { display: flex; justify-content: space-around; width: 100%; max-width: 1200px; }
+        .player-card { width: 220px; text-align: left; }
+        .bet-amount { font-size: 1.8rem; text-align: center; margin-bottom: 10px; color: #8b4513; min-height: 2.2rem; }
+        .status-box { border: 3px solid #000; background: white; padding: 10px; height: 160px; position: relative; }
+        .is-boss { border-color: #d35b31; background: #fff5f0; }
+        .boss-label { position: absolute; top: -25px; right: -10px; background: #ffff00; padding: 2px 10px; font-size: 1rem; border: 1px solid #000; }
+        .info-line { margin-bottom: 5px; font-size: 1.1rem; }
+
+        .bet-input-area { margin-top: 10px; display: flex; gap: 5px; }
+        .bet-input { font-family: 'BananaSlip', sans-serif; width: 60px; border: 2px solid #8b4513; border-radius: 5px; }
+        .bet-btn { font-family: 'BananaSlip', sans-serif; background: #ffcc00; border: 1px solid #8b4513; cursor: pointer; border-radius: 5px; }
+
+        #cutin-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 1000; color: white; }
+        .cutin-content { display: flex; align-items: center; gap: 40px; }
+        .monkey-img { width: 900px; height: 650px; border: 8px solid white; object-fit: cover; }
+        .yaku-text-vertical { font-size: 6rem; writing-mode: vertical-rl; text-orientation: upright; text-shadow: 4px 4px 0px #ffcc00; letter-spacing: 10px; }
+    </style>
+</head>
+<body>
+
+<div id="cutin-overlay">
+    <div class="cutin-content">
+        <div class="yaku-text-vertical" id="cutin-text-left">役名</div>
+        <img src="fukurotenaga.jpg" id="monkey-photo" class="monkey-img" alt="演出画像">
+        <div class="yaku-text-vertical" id="cutin-text-right">役名</div>
+    </div>
+</div>
+
+<div class="boss-order" id="boss-order-list"></div>
+
+<div class="timer-display" id="gameTimer">制限時間: 15</div>
+
+<div class="dice-container">
+    <div class="dice" id="dice-0">フ</div><div class="dice" id="dice-1">ク</div><div class="dice" id="dice-2">ロ</div>
+    <div class="dice" id="dice-3">テ</div><div class="dice" id="dice-4">ナ</div><div class="dice" id="dice-5">ガ</div>
+</div>
+
+<button class="roll-button" id="rollButton" disabled>サイコロを振る</button>
+<div class="roll-count-display" id="rollCount">残り回数: 3</div>
+
+<div class="players-container" id="players-wrapper"></div>
+
+<script>
+    const diceChars = ["フ", "ク", "ロ", "テ", "ナ", "ガ"];
+    const yakuConfig = {
+        "フクロテナガザル": { strength: 4, multiplier: 5 },
+        "テナガザル": { strength: 3, multiplier: 3 },
+        "クロザル": { strength: 2, multiplier: 2 },
+        "ナガザル": { strength: 2, multiplier: 2 },
+        "役なし": { strength: 0, multiplier: 1 }
+    };
+
+    let shuffleInterval = null;
+    let timerInterval = null;
+    let remainingRolls = 3;
+    let hasRerolledCount = 0;
+    let currentBossIndex = 0;
+    let bossCycleCount = 0;
+    let timeLeft = 15;
+
+    let players = [
+        { id: 0, name: "ユーザA", banana: 1000, bet: 0, hand: "役なし", strength: 0, rerollCount: 0 },
+        { id: 1, name: "ユーザB", banana: 1000, bet: 100, hand: "クロザル", strength: 2, rerollCount: 0 },
+        { id: 2, name: "ユーザC", banana: 1000, bet: 100, hand: "役なし", strength: 0, rerollCount: 0 },
+        { id: 3, name: "ユーザD", banana: 1000, bet: 100, hand: "ナガザル", strength: 2, rerollCount: 0 }
+    ];
+
+    window.onload = function() {
+        initRound();
+        document.getElementById('rollButton').onclick = () => {
+            stopTimer();
+            rollHandler();
+        };
+    };
+
+    function startTimer() {
+        stopTimer();
+        timeLeft = 15;
+        document.getElementById('gameTimer').innerText = "制限時間: " + timeLeft;
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById('gameTimer').innerText = "制限時間: " + timeLeft;
+            if (timeLeft <= 0) {
+                stopTimer();
+                autoAction();
+            }
+        }, 1000);
+    }
+
+    function stopTimer() {
+        if (timerInterval) clearInterval(timerInterval);
+    }
+
+    function autoAction() {
+        console.log("タイムアウト発生！自動で実行します。");
+        if (currentBossIndex !== 0 && players[0].bet === 0) {
+            submitBet();
+        }
+        rollHandler();
+    }
+
+    function initRound() {
+        remainingRolls = 3;
+        hasRerolledCount = 0;
+        document.getElementById('rollCount').innerText = "残り回数: 3";
+
+        players.forEach((p, idx) => {
+            p.hand = (idx === 1) ? "クロザル" : (idx === 3) ? "ナガザル" : "役なし";
+            p.strength = (idx === 1) ? 2 : (idx === 3) ? 2 : 0;
+            if (idx === currentBossIndex) { p.bet = 0; }
+            else { if (idx !== 0) p.bet = 100; else p.bet = 0; }
+        });
+
+        renderAll();
+
+        const rollBtn = document.getElementById('rollButton');
+        if (currentBossIndex === 0) {
+            rollBtn.disabled = false;
+            startTimer();
+        } else {
+            rollBtn.disabled = true;
+            startTimer();
+        }
+    }
+
+    function renderAll() {
+        const wrapper = document.getElementById('players-wrapper');
+        const orderList = document.getElementById('boss-order-list');
+        wrapper.innerHTML = "";
+        orderList.innerHTML = '<div class="boss-order-title">ボスザル順</div>';
+
+        players.forEach((p, idx) => {
+            const isBoss = (idx === currentBossIndex);
+            const card = document.createElement('div');
+            card.className = 'player-card';
+            card.innerHTML = `
+                <div class="bet-amount">${isBoss ? '' : p.bet + 'バナナ'}</div>
+                <div class="status-box ${isBoss ? 'is-boss' : ''}">
+                    ${isBoss ? '<div class="boss-label">ボスザル</div>' : ''}
+                    <div class="info-line">役: ${p.hand}</div>
+                    <div class="info-line">${p.name}</div>
+                    <div class="info-line">手もち: <span>${p.banana}</span></div>
+                    ${(idx === 0 && !isBoss && p.bet === 0) ? `
+                        <div class="bet-input-area">
+                            <input type="number" id="bet-input" class="bet-input" value="100">
+                            <button class="bet-btn" onclick="manualBet()">賭ける</button>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+            wrapper.appendChild(card);
+
+            const orderItem = document.createElement('div');
+            orderItem.className = 'boss-user' + (isBoss ? ' is-current-boss-text' : '');
+            orderItem.innerText = (isBoss ? '★ ' : '') + p.name;
+            orderList.appendChild(orderItem);
+        });
+    }
+
+    function manualBet() {
+        stopTimer();
+        submitBet();
+        startTimer();
+    }
+
+    function submitBet() {
+        const input = document.getElementById('bet-input');
+        const val = input ? parseInt(input.value) : 100;
+        players[0].bet = val;
+        renderAll();
+        document.getElementById('rollButton').disabled = false;
+    }
+
+    function rollHandler() {
+        if (!shuffleInterval && remainingRolls > 0) {
+            startTimer();
+            onRollDiceButtonPressed();
+        } else if (shuffleInterval) {
+            const result = [];
+            for(let i=0; i<6; i++) result.push(diceChars[Math.floor(Math.random() * diceChars.length)]);
+            stopShuffle(result);
+        }
+    }
+
+    function onRollDiceButtonPressed() {
+        document.getElementById('rollButton').innerText = "停止！";
+        shuffleInterval = setInterval(() => {
+            for (let i = 0; i < 6; i++) document.getElementById(`dice-${i}`).innerText = diceChars[Math.floor(Math.random() * diceChars.length)];
+        }, 50);
+    }
+
+    function stopShuffle(result) {
+        clearInterval(shuffleInterval);
+        shuffleInterval = null;
+        stopTimer();
+
+        if (remainingRolls < 3 && remainingRolls > 0) hasRerolledCount++;
+        remainingRolls--;
+        document.getElementById('rollCount').innerText = "残り回数: " + remainingRolls;
+        document.getElementById('rollButton').innerText = "サイコロを振る";
+        result.forEach((char, i) => { document.getElementById(`dice-${i}`).innerText = char; });
+
+        const yaku = judgeYaku(result);
+        players[0].hand = yaku;
+        players[0].strength = yakuConfig[yaku].strength;
+        players[0].rerollCount = hasRerolledCount;
+
+        if (yaku !== "役なし") {
+            document.getElementById('rollButton').disabled = true;
+            showCutIn(yaku);
+        } else if (remainingRolls === 0) {
+            document.getElementById('rollButton').disabled = true;
+            setTimeout(processSettlement, 1000);
+        } else {
+            startTimer();
+        }
+        renderAll();
+    }
+
+    function judgeYaku(diceArray) {
+        const s = diceArray.join("");
+        const set = new Set(diceArray);
+        if (set.size === 6) return "フクロテナガザル";
+        if (s.includes("テ") && s.includes("ナ") && s.includes("ガ")) return "テナガザル";
+        if (s.includes("ク") && s.includes("ロ")) return "クロザル";
+        if (s.includes("ナ") && s.includes("ガ")) return "ナガザル";
+        return "役なし";
+    }
+
+    function showCutIn(name) {
+        const overlay = document.getElementById('cutin-overlay');
+        document.getElementById('cutin-text-left').innerText = name;
+        document.getElementById('cutin-text-right').innerText = name;
+        overlay.style.display = 'flex';
+        setTimeout(() => {
+            overlay.style.display = 'none';
+            processSettlement();
+        }, 3000);
+    }
+
+    function processSettlement() {
+        stopTimer();
+        const boss = players[currentBossIndex];
+        const minions = players.filter((_, idx) => idx !== currentBossIndex);
+
+        const getPenalty = (pIdx, count) => {
+            if (pIdx !== 0) return 1.0;
+            if (count === 1) return 0.8;
+            if (count === 2) return 0.6;
+            return 1.0;
+        };
+
+        if (players.every(p => p.strength === 0)) {
+            minions.forEach(m => { boss.banana += m.bet; m.banana -= m.bet; });
+            alert(`全員役なし！${boss.name}の総取りです。`);
+        } else {
+            const maxMinionStrength = Math.max(...minions.map(m => m.strength));
+            if (boss.strength > 0 && boss.strength >= maxMinionStrength) {
+                const penalty = getPenalty(currentBossIndex, boss.rerollCount);
+                minions.forEach(m => {
+                    const amount = Math.floor(m.bet * yakuConfig[boss.hand].multiplier * penalty);
+                    m.banana -= amount;
+                    boss.banana += amount;
+                });
+                alert(`${boss.name}の勝利！`);
+            } else {
+                const winners = minions.filter(m => m.strength > boss.strength);
+                const losers = minions.filter(m => m.strength <= boss.strength);
+                let winnerNames = winners.map(w => w.name).join('と');
+                winners.forEach(w => {
+                    const penalty = getPenalty(players.indexOf(w), w.rerollCount);
+                    const mult = yakuConfig[w.hand].multiplier;
+                    const fromBoss = Math.floor(w.bet * mult * penalty);
+                    w.banana += fromBoss; boss.banana -= fromBoss;
+                    losers.forEach(l => {
+                        const amount = Math.floor((l.bet * mult * penalty) / winners.length);
+                        l.banana -= amount; w.banana += amount;
+                    });
+                });
+                alert(`${winnerNames}が勝利しました！`);
+            }
+        }
+
+        renderAll();
+
+        bossCycleCount++;
+        if (bossCycleCount >= 4 || players.some(p => p.banana <= 0)) {
+            setTimeout(endGame, 1000);
+        } else {
+            currentBossIndex = (currentBossIndex + 1) % 4;
+            setTimeout(() => {
+                alert(`次のボスザルは ${players[currentBossIndex].name} です。`);
+                initRound();
+            }, 1500);
+        }
+    }
+
+    function endGame() {
+        players.sort((a, b) => b.banana - a.banana);
+        let resultMsg = "【最終結果】\n";
+        players.forEach((p, i) => {
+            resultMsg += `${i + 1}位: ${p.name} (${p.banana}バナナ)\n`;
+        });
+        alert(resultMsg);
+        location.reload();
+    }
+</script>
+</body>
+</html>

@@ -55,10 +55,33 @@ public class ClientController {
         // 業務処理
         switch (msg.type) {
 
-            case HELLO:
-                System.out.println("ApplicationServer 接続完了");
+            case START:
+                System.out.println("Game start!");
+                updateBattleStatus(msg.players);
                 break;
-
+            case BET:
+                System.out.println("Bet phase");
+// atode
+                break;
+            case STATE:
+                System.out.println("Update state");
+                updateBattleStatus(msg.players);
+                break;
+            case ERROR:
+                System.out .println("無効な入力");
+// BETと同じ処理
+                break;
+            case ROLL:
+                System.out.println("Roll phase");
+                showRollDisplay(msg.playerId);
+                break;
+            case HAND:
+                System.out.println("Check hand");
+// 確認
+                break;
+            case RESULT:
+                System.out.println("result!");
+                
 
         }
     }
@@ -231,18 +254,20 @@ public class ClientController {
         applicationCommunication.send(msg);
     }
 
-    public void showRollDisplay(int playerId){
-        System.out.println("ROLL PHASE : "+playerId);
-        //　int playerId番目のプレイヤのロール
-    }
-
-
     // ROLL用の通信
     public void sendBattleInfo(){
         AppMessage msg = new AppMessage();
         msg.type = AppMessage.Type.valueOf("ROLL");
         applicationCommunication.send(msg);
     }
+
+
+    public void showRollDisplay(int playerId){
+        System.out.println("ROLL PHASE : "+playerId);
+        //　int playerId番目のプレイヤのロール
+    }
+
+
 
 
     public void updateBattleStatus(List<AppMessage.PlayerState> players) {

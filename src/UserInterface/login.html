@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>チンチロリン - ログイン</title>
+    <style>
+        @font-face {
+            font-family: 'BananaSlip';
+            src: url('YDWbananaslipplus.otf') format('opentype');
+        }
+
+        body {
+            font-family: 'BananaSlip', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f7e7ce;
+            margin: 0;
+        }
+
+        .game-title {
+            font-size: 4rem;
+            text-align: center;
+            color: #ffcc00;
+            text-shadow: 4px 4px 0px #8b4513, -1px -1px 0px #8b4513, 1px -1px 0px #8b4513, -1px 1px 0px #8b4513, 1px 1px 0px #8b4513;
+            margin-bottom: 2rem;
+            letter-spacing: 5px;
+        }
+
+        .container {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            width: 380px;
+            border: 5px solid #8b4513;
+        }
+
+        .tabs { display: flex; margin-bottom: 1.5rem; border-bottom: 3px solid #ddd; }
+        .tab {
+            flex: 1;
+            padding: 0.7rem;
+            text-align: center;
+            cursor: pointer;
+            color: #999;
+            font-size: 1.2rem;
+        }
+        .tab.active { color: #8b4513; border-bottom: 4px solid #ffcc00; }
+
+        .form-group { margin-bottom: 1.2rem; }
+        label { display: block; margin-bottom: 0.5rem; font-size: 1rem; color: #555; }
+
+        input {
+            font-family: 'BananaSlip', sans-serif;
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            box-sizing: border-box;
+            font-size: 1rem;
+            outline: none;
+        }
+        input:focus { border-color: #ffcc00; }
+
+        button {
+            font-family: 'BananaSlip', sans-serif;
+            width: 100%;
+            padding: 1rem;
+            background-color: #8b4513;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            margin-top: 1rem;
+            font-size: 1.3rem;
+            transition: all 0.2s;
+            box-shadow: 0 4px 0px #5d2e0d;
+        }
+        button:hover { background-color: #a0522d; transform: translateY(-2px); box-shadow: 0 6px 0px #5d2e0d; }
+        button:active { transform: translateY(2px); box-shadow: none; }
+
+        .error-message { color: red; font-size: 0.9rem; margin-top: 0.8rem; display: none; text-align: center; }
+        .hidden { display: none; }
+    </style>
+</head>
+
+<body>
+<div>
+    <h1 class="game-title">チンチロリン</h1>
+
+    <div class="container">
+        <div class="tabs">
+            <div id="loginTab" class="tab active" onclick="switchTab('login')">ログイン</div>
+            <div id="signupTab" class="tab" onclick="switchTab('signup')">新規登録</div>
+        </div>
+
+        <div id="loginForm">
+            <div class="form-group">
+                <label>ユーザ名</label>
+                <input type="text" id="loginId" placeholder="ユーザ名を入力">
+            </div>
+            <div class="form-group">
+                <label>パスワード</label>
+                <input type="password" id="loginPass" placeholder="パスワードを入力">
+            </div>
+            <button onclick="login()">ログイン</button>
+        </div>
+
+        <div id="signupForm" class="hidden">
+            <div class="form-group">
+                <label>ユーザ名</label>
+                <input type="text" id="signupId" placeholder="新しいユーザ名">
+            </div>
+            <div class="form-group">
+                <label>パスワード</label>
+                <input type="password" id="signupPass" placeholder="新しいパスワード">
+            </div>
+            <button onclick="signup()">登録する！</button>
+        </div>
+
+        <div id="msgDisplay" class="error-message"></div>
+    </div>
+</div>
+
+<script type="module">
+    import { connect, send, showMessage } from "./app.js";
+
+    /* ===========================
+       LoginScreen 相当（本番）
+    =========================== */
+    const LoginScreen = {
+        validateInput(input) {
+            return input != null && input.length >= 3;
+        },
+
+        showMessage(msg) {
+            showMessage("msgDisplay", msg);
+        },
+
+        onLoginButtonPressed(id, pass) {
+            if (!this.validateInput(id) || !this.validateInput(pass)) {
+                this.showMessage("ID または パスワードが不正です");
+                return;
+            }
+            send({ type: "LOGIN", id: id, password: pass });
+            this.showMessage("ログイン中...");
+        },
+
+        onSignUpButtonPressed(id, pass) {
+            if (!this.validateInput(id) || !this.validateInput(pass)) {
+                this.showMessage("ID または パスワードが不正です");
+                return;
+            }
+            send({ type: "RESISTER", id: id, pass: pass });
+            this.showMessage("登録中...");
+        }
+    };
+
+    /* ===========================
+       WebSocket 受信 → 分岐処理
+    =========================== */
+    connect((message) => {
+        let json;
+        try {
+            json = JSON.parse(message);
+        } catch (e) {
+            LoginScreen.showMessage("受信データの解析に失敗しました");
+            return;
+        }
+
+        const type = json.type;
+
+        // ログイン結果
+        if (type === "LOGIN_SUCCES") {
+            sessionStorage.setItem("userId", document.getElementById("loginId").value);
+            if (json.sessionId) sessionStorage.setItem("sessionId", json.sessionId);
+            location.href = "./home.html";
+            return;
+        }
+        if (type === "LOGIN_FAILURE") {
+            LoginScreen.showMessage("ログイン失敗: " + (json.errorMessage ?? ""));
+            return;
+        }
+
+        // 新規登録結果
+        if (type === "RESISTER_SUCCES") {
+            sessionStorage.setItem("userId", document.getElementById("signupId").value);
+            location.href = "./home.html";
+            return;
+        }
+        if (type === "RESISTER_FAILURE") {
+            LoginScreen.showMessage("登録失敗: " + (json.errorMessage ?? ""));
+            return;
+        }
+
+        LoginScreen.showMessage("未知のtype: " + type);
+    });
+
+    /* ===========================
+       UI：タブ切替
+    =========================== */
+    window.switchTab = function (type) {
+        const isLogin = type === 'login';
+        document.getElementById('loginForm').classList.toggle('hidden', !isLogin);
+        document.getElementById('signupForm').classList.toggle('hidden', isLogin);
+        document.getElementById('loginTab').classList.toggle('active', isLogin);
+        document.getElementById('signupTab').classList.toggle('active', !isLogin);
+        document.getElementById('msgDisplay').style.display = 'none';
+    };
+
+    /* ===========================
+       UI：ボタン押下
+    =========================== */
+    window.login = function () {
+        const id = document.getElementById('loginId').value;
+        const pass = document.getElementById('loginPass').value;
+        LoginScreen.onLoginButtonPressed(id, pass);
+    };
+
+    window.signup = function () {
+        const id = document.getElementById('signupId').value;
+        const pass = document.getElementById('signupPass').value;
+        LoginScreen.onSignUpButtonPressed(id, pass);
+    };
+</script>
+
+</body>
+</html>

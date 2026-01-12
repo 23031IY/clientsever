@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>最終結果発表 - チンチロリン</title>
+    <style>
+        @font-face {
+            font-family: 'BananaSlip';
+            src: url('YDWbananaslipplus.otf') format('opentype');
+        }
+
+        body {
+            font-family: 'BananaSlip', sans-serif;
+            background-color: #f7e7ce;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .result-container {
+            background: #fff;
+            color: #333;
+            padding: 50px;
+            border-radius: 30px;
+            border: 12px solid #8b4513;
+            text-align: center;
+            width: 600px;
+            box-shadow: 0 20px 0 rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .result-title {
+            font-size: 4rem;
+            color: #d35b31;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 0 #fff, 4px 4px 0 rgba(0,0,0,0.1);
+        }
+
+        .ranking-list {
+            margin: 20px 0;
+        }
+
+        .ranking-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 2rem;
+            padding: 15px 20px;
+            margin: 10px 0;
+            border-bottom: 3px dashed #eee;
+            background: #fafafa;
+            border-radius: 10px;
+        }
+
+        .rank-1 {
+            background: #fff9c4;
+            border: 4px solid #f1c40f;
+            font-size: 2.8rem;
+            color: #d35b31;
+            transform: scale(1.05);
+        }
+
+        .rank-number {
+            font-weight: bold;
+            margin-right: 15px;
+        }
+
+        .banana-count {
+            color: #8b4513;
+        }
+
+        .banana-unit {
+            font-size: 1.2rem;
+            margin-left: 5px;
+        }
+
+        .btn-home {
+            margin-top: 40px;
+            padding: 15px 50px;
+            font-family: 'BananaSlip';
+            background-color: #a7c1e1;
+            color: #333;
+            border: 3px solid #555;
+            border-radius: 15px;
+            font-size: 1.8rem;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #7a8ea6;
+            transition: 0.1s;
+        }
+
+        .btn-home:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #7a8ea6;
+        }
+
+        .deco-banana {
+            position: absolute;
+            font-size: 3rem;
+            opacity: 0.3;
+        }
+        .top-left { top: 20px; left: 20px; transform: rotate(-20deg); }
+        .bottom-right { bottom: 20px; right: 20px; transform: rotate(160deg); }
+    </style>
+</head>
+<body>
+
+<div class="result-container">
+    <div class="deco-banana top-left">🍌</div>
+    <div class="deco-banana bottom-right">🍌</div>
+
+    <div class="result-title">最終順位発表</div>
+
+    <div class="ranking-list" id="ranking-list">
+        <div class="ranking-item rank-1">
+            <span><span class="rank-number">1位</span><span id="name-1">ユーザA</span></span>
+            <span class="banana-count"><span id="val-1">5400</span><span class="banana-unit">バナナ</span></span>
+        </div>
+        <div class="ranking-item">
+            <span><span class="rank-number">2位</span><span id="name-2">ユーザD</span></span>
+            <span class="banana-count"><span id="val-2">1200</span><span class="banana-unit">バナナ</span></span>
+        </div>
+        <div class="ranking-item">
+            <span><span class="rank-number">3位</span><span id="name-3">ユーザB</span></span>
+            <span class="banana-count"><span id="val-3">800</span><span class="banana-unit">バナナ</span></span>
+        </div>
+        <div class="ranking-item">
+            <span><span class="rank-number">4位</span><span id="name-4">ユーザC</span></span>
+            <span class="banana-count"><span id="val-4">0</span><span class="banana-unit">バナナ</span></span>
+        </div>
+    </div>
+
+    <button class="btn-home" onclick="goToTitle()">タイトルへ戻る</button>
+</div>
+
+<script>
+
+</script>
+
+</body>
+</html>

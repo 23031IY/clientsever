@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>チンチロリン - ホーム</title>
+    <style>
+        @font-face {
+            font-family: 'BananaSlip';
+            src: url('YDWbananaslipplus.otf') format('opentype');
+        }
+
+        body {
+            font-family: 'BananaSlip', sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f7e7ce;
+            margin: 0;
+        }
+
+        .game-title {
+            font-size: 4rem;
+            text-align: center;
+            color: #ffcc00;
+            text-shadow: 4px 4px 0px #8b4513, -1px -1px 0px #8b4513, 1px -1px 0px #8b4513, -1px 1px 0px #8b4513, 1px 1px 0px #8b4513;
+            margin-bottom: 2rem;
+            letter-spacing: 5px;
+        }
+
+        button {
+            font-family: 'BananaSlip', sans-serif;
+            width: 50%;
+            padding: 1rem;
+            background-color: #8b4513;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            margin-top: 1rem;
+            font-size: 1.3rem;
+            transition: all 0.2s;
+            box-shadow: 0 4px 0px #5d2e0d;
+        }
+        button:hover { background-color: #a0522d; transform: translateY(-2px); box-shadow: 0 6px 0px #5d2e0d; }
+        button:active { transform: translateY(2px); box-shadow: none; }
+
+        .user-panel {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+
+            display: flex;
+            align-items: center;
+            gap: 12px;
+
+            background-color: #deb887;
+            border: 4px solid #8b4513;
+            padding: 10px 16px;
+            border-radius: 12px;
+
+            box-shadow: 4px 4px 0px #5d2e0d;
+            font-size: 1rem;
+        }
+
+        .logout-btn {
+            width: auto;
+            padding: 0.4rem 0.8rem;
+            font-size: 1rem;
+            margin-top: 0;
+        }
+
+        .status {
+            margin-top: 1rem;
+            color: #8b4513;
+            font-size: 1.1rem;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+<h1 class="game-title">チンチロリン</h1>
+
+<!-- ★ onclick は関数呼び出しにする必要があるので matching() -->
+<button onclick="matching()">群れに合流する</button>
+
+<div id="status" class="status"></div>
+
+<div class="user-panel">
+    <span id="username">ユーザー名</span>
+    <button class="logout-btn" onclick="logout()">森に帰る</button>
+</div>
+
+<script type="module">
+    import { connect, send } from "./app.js";
+
+    /* ===========================
+       HomeScreen 相当（本番）
+    =========================== */
+    const HomeScreen = {
+        setStatus(msg) {
+            const el = document.getElementById("status");
+            el.textContent = msg;
+            el.style.display = "block";
+        },
+
+        showUsername() {
+            const name = sessionStorage.getItem("userId");
+            document.getElementById("username").textContent = name ?? "ユーザー名";
+        },
+
+        onMatchButtonPressed() {
+            const id = sessionStorage.getItem("userId");
+            if (!id) {
+                alert("ログイン情報がありません。ログイン画面に戻ります。");
+                location.href = "./login.html";
+                return;
+            }
+            // マッチング要求（サーバ仕様に合わせる）
+            send({ type: "MATCHING", id: id });
+            this.setStatus("マッチング中...");
+        },
+
+        onLogoutButtonPressed() {
+            // ログアウト要求（サーバ仕様に合わせる）
+            send({ type: "LOGOUT" });
+            this.setStatus("ログアウト中...");
+        }
+    };
+
+    HomeScreen.showUsername();
+
+    /* ===========================
+       WebSocket 受信 → 分岐処理
+    =========================== */
+    connect((message) => {
+        let json;
+        try {
+            json = JSON.parse(message);
+        } catch (e) {
+            console.log("invalid json", message);
+            return;
+        }
+
+        const type = json.type;
+
+        // マッチング結果
+        if (type === "MATCH_STATUS") {
+            if (json.success) {
+                HomeScreen.setStatus("マッチング成功！");
+                // battle画面へ（未作成なら後で追加）
+                location.href = "./battle.html";
+            } else {
+                HomeScreen.setStatus("マッチング失敗: " + (json.errorMessage ?? ""));
+            }
+            return;
+        }
+
+        // ログアウト結果
+        if (type === "LOGOUT_SUCCES") {
+            sessionStorage.clear();
+            location.href = "./login.html";
+            return;
+        }
+
+        if (type === "LOGOUT_FAILURE") {
+            HomeScreen.setStatus("ログアウト失敗");
+            return;
+        }
+    });
+
+    /* ===========================
+       HTMLから呼ぶ関数
+    =========================== */
+    window.matching = function () {
+        HomeScreen.onMatchButtonPressed();
+    };
+
+    window.logout = function () {
+        HomeScreen.onLogoutButtonPressed();
+    };
+</script>
+
+</body>
+</html>
