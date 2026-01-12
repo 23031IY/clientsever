@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>UI Test - チンチロリン</title>
+</head>
+
+<body>
+<h1>UIテスト（LoginScreen）</h1>
+
+<div>
+    <input id="loginId" placeholder="ユーザ名">
+    <input id="loginPass" type="password" placeholder="パスワード">
+    <button onclick="login()">ログイン</button>
+</div>
+
+<div>
+    <input id="signupId" placeholder="新規ユーザ名">
+    <input id="signupPass" type="password" placeholder="新規パスワード">
+    <button onclick="signup()">登録</button>
+</div>
+
+<div id="msgDisplay" style="color:red; margin-top:10px;"></div>
+
+<hr>
+<button onclick="mockLoginSuccess()">▶ LOGIN_SUCCES</button>
+<button onclick="mockLoginFail()">▶ LOGIN_FAILURE</button>
+<button onclick="mockRegisterSuccess()">▶ RESISTER_SUCCES</button>
+<button onclick="mockRegisterFail()">▶ RESISTER_FAILURE</button>
+
+<script>
+    /* ============================
+       LoginScreen 相当（UIロジック）
+    ============================ */
+    const LoginScreen = {
+        onLoginButtonPressed(id, pass) {
+            if (!this.validateInput(id) || !this.validateInput(pass)) {
+                this.showMessage("ID または パスワードが不正です");
+                return;
+            }
+            this.showMessage("ログイン中...");
+        },
+
+        onSignUpButtonPressed(id, pass) {
+            if (!this.validateInput(id) || !this.validateInput(pass)) {
+                this.showMessage("ID または パスワードが不正です");
+                return;
+            }
+            this.showMessage("登録中...");
+        },
+
+        validateInput(input) {
+            return input && input.length >= 3;
+        },
+
+        showMessage(msg) {
+            document.getElementById("msgDisplay").textContent = msg;
+        }
+    };
+
+    /* ============================
+       HTMLボタン
+    ============================ */
+    function login() {
+        LoginScreen.onLoginButtonPressed(
+            loginId.value, loginPass.value);
+    }
+
+    function signup() {
+        LoginScreen.onSignUpButtonPressed(
+            signupId.value, signupPass.value);
+    }
+
+    /* ============================
+       サーバ応答モック
+    ============================ */
+    function mockLoginSuccess() {
+        LoginScreen.showMessage("ログイン成功 → home.html に遷移");
+        console.log("LOGIN_SUCCES");
+    }
+
+    function mockLoginFail() {
+        LoginScreen.showMessage("ログイン失敗");
+        console.log("LOGIN_FAILURE");
+    }
+
+    function mockRegisterSuccess() {
+        LoginScreen.showMessage("登録成功 → home.html に遷移");
+        console.log("RESISTER_SUCCES");
+    }
+
+    function mockRegisterFail() {
+        LoginScreen.showMessage("登録失敗");
+        console.log("RESISTER_FAILURE");
+    }
+</script>
+</body>
+</html>
