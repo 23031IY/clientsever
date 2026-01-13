@@ -61,7 +61,7 @@ public class ClientController {
                 break;
             case BET:
                 System.out.println("Bet phase");
-// atode
+                battleScreen.showBetUI();
                 break;
             case STATE:
                 System.out.println("Update state");
@@ -69,7 +69,7 @@ public class ClientController {
                 break;
             case ERROR:
                 System.out .println("無効な入力");
-// BETと同じ処理
+                battleScreen.showBetUI();
                 break;
             case ROLL:
                 System.out.println("Roll phase");
@@ -81,7 +81,9 @@ public class ClientController {
                 break;
             case RESULT:
                 System.out.println("result!");
-                
+                transitionToResultScreen();
+                resultScreen.showResult(msg);
+                break;
 
         }
     }

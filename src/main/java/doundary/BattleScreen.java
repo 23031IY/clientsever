@@ -40,4 +40,8 @@ public class BattleScreen extends Screen {
     public void showBattleScreen() {
         System.out.println("=== バトル画面 ===");
     }
+
+    public void showBetUI() {
+        System.out.println("=== BET フェーズ開始 ===");
+    }
 }

@@ -101,10 +101,21 @@
             font-size: 3rem;
             opacity: 0.3;
         }
-        .top-left { top: 20px; left: 20px; transform: rotate(-20deg); }
-        .bottom-right { bottom: 20px; right: 20px; transform: rotate(160deg); }
+
+        .top-left {
+            top: 20px;
+            left: 20px;
+            transform: rotate(-20deg);
+        }
+
+        .bottom-right {
+            bottom: 20px;
+            right: 20px;
+            transform: rotate(160deg);
+        }
     </style>
 </head>
+
 <body>
 
 <div class="result-container">
@@ -113,21 +124,21 @@
 
     <div class="result-title">最終順位発表</div>
 
-    <div class="ranking-list" id="ranking-list">
-        <div class="ranking-item rank-1">
-            <span><span class="rank-number">1位</span><span id="name-1">ユーザA</span></span>
-            <span class="banana-count"><span id="val-1">5400</span><span class="banana-unit">バナナ</span></span>
+    <div class="ranking-list">
+        <div class="ranking-item">
+            <span><span class="rank-number">1位</span><span id="name-1">---</span></span>
+            <span class="banana-count"><span id="val-1">0</span><span class="banana-unit">バナナ</span></span>
         </div>
         <div class="ranking-item">
-            <span><span class="rank-number">2位</span><span id="name-2">ユーザD</span></span>
-            <span class="banana-count"><span id="val-2">1200</span><span class="banana-unit">バナナ</span></span>
+            <span><span class="rank-number">2位</span><span id="name-2">---</span></span>
+            <span class="banana-count"><span id="val-2">0</span><span class="banana-unit">バナナ</span></span>
         </div>
         <div class="ranking-item">
-            <span><span class="rank-number">3位</span><span id="name-3">ユーザB</span></span>
-            <span class="banana-count"><span id="val-3">800</span><span class="banana-unit">バナナ</span></span>
+            <span><span class="rank-number">3位</span><span id="name-3">---</span></span>
+            <span class="banana-count"><span id="val-3">0</span><span class="banana-unit">バナナ</span></span>
         </div>
         <div class="ranking-item">
-            <span><span class="rank-number">4位</span><span id="name-4">ユーザC</span></span>
+            <span><span class="rank-number">4位</span><span id="name-4">---</span></span>
             <span class="banana-count"><span id="val-4">0</span><span class="banana-unit">バナナ</span></span>
         </div>
     </div>
@@ -135,8 +146,67 @@
     <button class="btn-home" onclick="goToTitle()">タイトルへ戻る</button>
 </div>
 
-<script>
+<script type="module">
+    import { connect } from "./app.js";
 
+    /* ===========================
+       最終結果画面（GAME END）
+    =========================== */
+    const ResultScreen = {
+
+        showResult(msg) {
+            if (!msg.players) return;
+
+            // 所持バナナ数で最終順位決定
+            const sorted = [...msg.players].sort(
+                (a, b) => b.ownedBananas - a.ownedBananas
+            );
+
+            const items = document.querySelectorAll(".ranking-item");
+
+            items.forEach((item, index) => {
+                item.classList.remove("rank-1");
+
+                if (sorted[index]) {
+                    const p = sorted[index];
+
+                    document.getElementById(`name-${index + 1}`).textContent =
+                        p.name;
+
+                    document.getElementById(`val-${index + 1}`).textContent =
+                        p.ownedBananas;
+
+                    // ★ 1位のみ強調
+                    if (index === 0) {
+                        item.classList.add("rank-1");
+                    }
+                }
+            });
+        }
+    };
+
+    /* ===========================
+       WebSocket受信
+    =========================== */
+    connect((message) => {
+        let json;
+        try {
+            json = JSON.parse(message);
+        } catch {
+            return;
+        }
+
+        if (json.type === "RESULT") {
+            ResultScreen.showResult(json);
+        }
+    });
+
+    /* ===========================
+       ホームへ戻る
+    =========================== */
+    window.goToTitle = function () {
+        location.href = "./home.html";
+    };
 </script>
 
 </body>
