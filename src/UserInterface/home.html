@@ -124,8 +124,9 @@
         },
 
         onLogoutButtonPressed() {
-            // ログアウト要求（サーバ仕様に合わせる）
-            send({ type: "LOGOUT" });
+            // IDも一緒に送ることで、サーバが待機リストから削除できるようにする
+            const id = sessionStorage.getItem("userId");
+            send({ type: "LOGOUT", id: id });
             this.setStatus("ログアウト中...");
         }
     };
@@ -174,7 +175,7 @@
         }
 
         // ログアウト結果
-        if (type === "LOGOUT_SUCCES") {
+        if (type === "LOGOUT_SUCCESS") {
             sessionStorage.clear();
             location.href = "./login.html";
             return;
