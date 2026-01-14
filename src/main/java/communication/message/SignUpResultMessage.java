@@ -2,6 +2,6 @@ package communication.message;
 
 public class SignUpResultMessage {
     public String type;
-    public boolean success;      // true / false
-    public String errorMessage;  // 失敗時
+    public boolean result;      // true / false
+    public String message;  // 失敗時
 }

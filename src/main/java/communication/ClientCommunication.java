@@ -1,10 +1,7 @@
 package communication;
 
 import com.google.gson.Gson;
-import communication.message.LoginReqMessage;
-import communication.message.LogoutReqMessage;
-import communication.message.MatchingReqMessage;
-import communication.message.SignUpReqMessage;
+import communication.message.*; // 以前のMessageクラス群
 import control.ClientController;
 import jakarta.websocket.Session;
 
@@ -12,27 +9,34 @@ public class ClientCommunication {
 
     private Session session;
     private final Gson gson = new Gson();
-    private final ClientController controller;
+    private ClientController controller; // 後からセットする
 
-    public ClientCommunication(ClientController controller) {
+    // コンストラクタは引数なしに変更
+    public ClientCommunication() {
+    }
+
+    // 相互参照の解消用セッター
+    public void setClientController(ClientController controller) {
         this.controller = controller;
     }
 
-    void setSession(Session session) {
+    public void setSession(Session session) {
         this.session = session;
     }
 
-    void handleClientMessage(String json) {
-        controller.onClientServerMessage(json);
+    public void handleClientMessage(String json) {
+        if (controller != null) {
+            controller.onClientServerMessage(json);
+        }
     }
-
-
 
     // ↓送信用メソッド
 
-    public void send(String json) {
+    private void send(String json) {
         if (session != null && session.isOpen()) {
             session.getAsyncRemote().sendText(json);
+        } else {
+            System.err.println("送信エラー: セッションが確立されていません");
         }
     }
 
@@ -56,6 +60,4 @@ public class ClientCommunication {
         String msg = gson.toJson(matchingReqMessage);
         send(msg);
     }
-
 }
-

@@ -9,25 +9,29 @@ public class ApplicationCommunication {
 
     private Session session;
     private final Gson gson = new Gson();
-    private final ClientController controller;
+    private ClientController controller;
 
-    public ApplicationCommunication(ClientController controller) {
+    public ApplicationCommunication() {
+    }
+
+    public void setClientController(ClientController controller) {
         this.controller = controller;
     }
 
-    void setSession(Session session) {
+    public void setSession(Session session) {
         this.session = session;
     }
 
-    void handleAppMessage(String json) {
-        AppMessage msg = gson.fromJson(json, AppMessage.class);
-        controller.onApplicationServerMessage(msg);
+    public void handleAppMessage(String json) {
+        if (controller != null) {
+            AppMessage msg = gson.fromJson(json, AppMessage.class);
+            controller.onApplicationServerMessage(msg);
+        }
     }
 
     public void send(AppMessage msg) {
         if (session != null && session.isOpen()) {
-            session.getAsyncRemote()
-                    .sendText(gson.toJson(msg));
+            session.getAsyncRemote().sendText(gson.toJson(msg));
         }
     }
 }

@@ -1,3 +1,5 @@
+//　　な　　に　　コ　　レ
+
 package org.example;
 
 import com.google.gson.Gson;

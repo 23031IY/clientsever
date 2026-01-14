@@ -172,7 +172,7 @@
         const type = json.type;
 
         // ログイン結果
-        if (type === "LOGIN_SUCCES") {
+        if (type === "LOGIN_SUCCESS") {
             sessionStorage.setItem("userId", document.getElementById("loginId").value);
             if (json.sessionId) sessionStorage.setItem("sessionId", json.sessionId);
             location.href = "./home.html";
@@ -184,12 +184,12 @@
         }
 
         // 新規登録結果
-        if (type === "RESISTER_SUCCES") {
+        if (type === "REGISTER_SUCCESS") {
             sessionStorage.setItem("userId", document.getElementById("signupId").value);
             location.href = "./home.html";
             return;
         }
-        if (type === "RESISTER_FAILURE") {
+        if (type === "REGISTER_FAILURE") {
             LoginScreen.showMessage("登録失敗: " + (json.errorMessage ?? ""));
             return;
         }
