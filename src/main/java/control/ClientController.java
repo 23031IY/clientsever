@@ -98,7 +98,7 @@ public class ClientController {
                 case RESULT:
                     System.out.println("Game Set!");
                     // 結果画面へ遷移、またはバトル画面で結果ダイアログ
-                    // transitionToResultScreen();
+                    transitionToResultScreen();
                     battleScreen.showMessage("勝負あり！結果を確認してください。");
                     break;
             }
