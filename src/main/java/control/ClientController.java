@@ -73,10 +73,11 @@ public class ClientController {
                 break;
             case ROLL:
                 System.out.println("Roll phase");
-                showRollDisplay(msg.playerId);
+                battleScreen.showRollUI();
                 break;
             case HAND:
                 System.out.println("Check hand");
+                battleScreen.showHand(msg);
 // 確認
                 break;
             case RESULT:
@@ -262,15 +263,6 @@ public class ClientController {
         msg.type = AppMessage.Type.valueOf("ROLL");
         applicationCommunication.send(msg);
     }
-
-
-    public void showRollDisplay(int playerId){
-        System.out.println("ROLL PHASE : "+playerId);
-        //　int playerId番目のプレイヤのロール
-    }
-
-
-
 
     public void updateBattleStatus(List<AppMessage.PlayerState> players) {
         battleScreen.updateScreen(players);
