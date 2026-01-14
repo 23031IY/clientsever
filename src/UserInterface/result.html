@@ -155,12 +155,19 @@
     const ResultScreen = {
 
         showResult(msg) {
-            if (!msg.players) return;
+            if (!msg || !msg.players) return;
 
-            // 所持バナナ数で最終順位決定
-            const sorted = [...msg.players].sort(
-                (a, b) => b.ownedBananas - a.ownedBananas
-            );
+            // 点数キーの候補（存在するものを優先）
+            const getPoint = (p) => {
+                // 例: score があるなら score、なければ ownedBananas
+                if (typeof p.score === "number") return p.score;
+                if (typeof p.points === "number") return p.points;
+                if (typeof p.ownedBananas === "number") return p.ownedBananas;
+                return 0;
+            };
+
+            // 点数（降順）でソート
+            const sorted = [...msg.players].sort((a, b) => getPoint(b) - getPoint(a));
 
             const items = document.querySelectorAll(".ranking-item");
 
@@ -170,20 +177,28 @@
                 if (sorted[index]) {
                     const p = sorted[index];
 
-                    document.getElementById(`name-${index + 1}`).textContent =
-                        p.name;
+                    document.getElementById(`name-${index + 1}`).textContent = p.name ?? "---";
+                    document.getElementById(`val-${index + 1}`).textContent = String(getPoint(p));
 
-                    document.getElementById(`val-${index + 1}`).textContent =
-                        p.ownedBananas;
-
-                    // ★ 1位のみ強調
-                    if (index === 0) {
-                        item.classList.add("rank-1");
-                    }
+                    if (index === 0) item.classList.add("rank-1");
+                } else {
+                    document.getElementById(`name-${index + 1}`).textContent = "---";
+                    document.getElementById(`val-${index + 1}`).textContent = "0";
                 }
             });
         }
     };
+
+    (function bootFromStorage() {
+        try {
+            const raw = localStorage.getItem("chinchi_last_result");
+            if (!raw) return;
+            const saved = JSON.parse(raw);
+            ResultScreen.showResult(saved);
+        } catch (e) {
+            console.warn("保存結果の読み込みに失敗:", e);
+        }
+    })();
 
     /* ===========================
        WebSocket受信

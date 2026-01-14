@@ -249,9 +249,21 @@
                 break;
 
             case "RESULT":
-                toast(msg.message); // GAME_END など
+                toast(msg.message);
                 updatePhaseDisplay("結果発表: " + msg.message);
+
+                // ★ ここで最終結果（players含む）を保存
+                try {
+                    localStorage.setItem("chinchi_last_result", JSON.stringify(msg));
+                } catch (e) {
+                    console.warn("結果保存に失敗:", e);
+                }
+
+                setTimeout(() => {
+                    location.href = "./result.html";
+                }, 500);
                 break;
+
 
             case "STATE":
                 break;
