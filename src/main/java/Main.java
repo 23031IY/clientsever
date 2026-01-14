@@ -14,8 +14,8 @@ import javax.swing.SwingUtilities;
 public class Main {
 
     // サーバ設定 (ポートやパスは環境に合わせてください)
-    private static final String CLIENT_SERVER_URI = "ws://202.18.108.39:8080/ChinchiroServer/ws";
-    private static final String APP_SERVER_URI    = "ws://202.18.108.39:8082/GameServer/game";
+    private static final String CLIENT_SERVER_URI = "ws://192.168.56.1:8080/ChinchiroServer/ws";
+    private static final String APP_SERVER_URI    = "ws://192.168.56.1:8082/GameServer/game";
 
     public static void main(String[] args) {
         // SwingのUI処理は専用のスレッド(EDT)で行うのが定石です
