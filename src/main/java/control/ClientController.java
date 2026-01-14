@@ -6,8 +6,9 @@ import com.google.gson.JsonParser;
 import communication.ApplicationCommunication;
 import communication.ClientCommunication;
 import communication.message.*;
-import doundary.*;
+import doundary.*; // パッケージ名はそのままでいきます
 
+import javax.swing.SwingUtilities;
 import java.util.List;
 
 public class ClientController {
@@ -35,8 +36,8 @@ public class ClientController {
         this.clientCommunication = c;
         this.applicationCommunication = a;
 
-
         // 各画面の生成
+        // (Screen側で controller を受け取るコンストラクタになっている前提)
         loginScreen  = new LoginScreen(this);
         signUpScreen = new SignUpScreen(this);
         homeScreen   = new HomeScreen(this);
@@ -48,93 +49,112 @@ public class ClientController {
         loginScreen.showLoginScreen();
     }
 
-    // 通信
-    /* Application Server からの通知 */
+    // --- 通信: Game Server (Application Server) からの通知 ---
     public void onApplicationServerMessage(AppMessage msg) {
-        System.out.println("ApplicationServer: " + msg);
-        // 業務処理
-        switch (msg.type) {
+        System.out.println("ApplicationServer: " + msg.type);
 
-            case START:
-                System.out.println("Game start!");
-                updateBattleStatus(msg.players);
-                break;
-            case BET:
-                System.out.println("Bet phase");
-// atode
-                break;
-            case STATE:
-                System.out.println("Update state");
-                updateBattleStatus(msg.players);
-                break;
-            case ERROR:
-                System.out .println("無効な入力");
-// BETと同じ処理
-                break;
-            case ROLL:
-                System.out.println("Roll phase");
-                showRollDisplay(msg.playerId);
-                break;
-            case HAND:
-                System.out.println("Check hand");
-// 確認
-                break;
-            case RESULT:
-                System.out.println("result!");
-                
+        // Swingの画面更新はEDTで行う
+        SwingUtilities.invokeLater(() -> {
+            switch (msg.type) {
+                case START:
+                    System.out.println("Game start!");
+                    // バトル画面へ遷移し、初期状態を反映
+                    transitionToBattleScreen();
+                    updateBattleStatus(msg.players);
+                    break;
 
-        }
+                case BET:
+                    System.out.println("Bet phase");
+                    // 画面にメッセージを出す、あるいはBET入力を有効化する
+                    battleScreen.showMessage("ベットしてください");
+                    // 必要であれば battleScreen.enableBetButton(); などを実装して呼ぶ
+                    break;
+
+                case STATE:
+                    System.out.println("Update state");
+                    updateBattleStatus(msg.players);
+                    break;
+
+                case ERROR:
+                    System.out.println("エラー: " + msg.message);
+                    battleScreen.showMessage("エラー: " + msg.message);
+                    break;
+
+                case ROLL:
+                    System.out.println("Roll phase: Player " + msg.playerId);
+                    // 自分のターンならロールボタンを有効にするなどの処理
+                    // ここでは簡易的にメッセージ表示のみ
+                    battleScreen.showMessage("プレイヤー " + msg.playerId + " の番です");
+
+                    // もし msg.playerId が自分ならボタンを有効化する判定を入れると良い
+                    // if (msg.playerId == myId) battleScreen.setRollButtonEnabled(true);
+                    break;
+
+                case HAND:
+                    System.out.println("Check hand");
+                    // 役の結果などを表示
+                    break;
+
+                case RESULT:
+                    System.out.println("Game Set!");
+                    // 結果画面へ遷移、またはバトル画面で結果ダイアログ
+                    // transitionToResultScreen();
+                    battleScreen.showMessage("勝負あり！結果を確認してください。");
+                    break;
+            }
+        });
     }
 
-    // Client管理サーバから（JSON文字列）
+    // --- 通信: User Management Server (Client Server) からの通知 ---
     public void onClientServerMessage(String message) {
-
         System.out.println("[client] onMessage: " + message);
 
-        JsonObject json = JsonParser
-                .parseString(message)
-                .getAsJsonObject();
-        String type = json.get("type").getAsString();
-        // 業務処理
-        switch (type) {
-            case "LOGIN_SUCCES":
-            case "LOGIN_FAILURE": {
-                LoginResultMessage login =
-                        gson.fromJson(message, LoginResultMessage.class);
-                handleLoginResult(login);
-                break;
-            }
-
-            case "RESISTER_SUCCES":
-            case "RESISTER_FAILURE": {
-                SignUpResultMessage signUp =
-                        gson.fromJson(message, SignUpResultMessage.class);
-                handleSignUpResult(signUp);
-                break;
-            }
-            case "MATCH_STATUS":
-                MatchingResultMessage match =
-                        gson.fromJson(message, MatchingResultMessage.class);
-                handleMatchingResult(match);
-                break;
-
-            case "LOGOUT_SUCCES":
-                //あとで
-
-            case "LOGOUT_FAILURE":
-                //やる
-
-
-
+        // JSONパース
+        JsonObject json;
+        try {
+            json = JsonParser.parseString(message).getAsJsonObject();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return;
         }
 
+        if (!json.has("type")) return;
+        String type = json.get("type").getAsString();
 
+        SwingUtilities.invokeLater(() -> {
+            switch (type) {
+                // スペル修正: SUCCES -> SUCCESS
+                case "LOGIN_SUCCESS":
+                case "LOGIN_FAILURE": {
+                    LoginResultMessage login = gson.fromJson(message, LoginResultMessage.class);
+                    handleLoginResult(login);
+                    break;
+                }
 
+                // スペル修正: RESISTER -> REGISTER, SUCCES -> SUCCESS
+                case "REGISTER_SUCCESS":
+                case "REGISTER_FAILURE": {
+                    SignUpResultMessage signUp = gson.fromJson(message, SignUpResultMessage.class);
+                    handleSignUpResult(signUp);
+                    break;
+                }
+
+                case "MATCH_STATUS":
+                    MatchingResultMessage match = gson.fromJson(message, MatchingResultMessage.class);
+                    handleMatchingResult(match);
+                    break;
+
+                case "LOGOUT_SUCCESS":
+                    System.out.println("ログアウト成功");
+                    transitionToLoginScreen();
+                    break;
+
+                case "LOGOUT_FAILURE":
+                    System.out.println("ログアウト失敗");
+                    break;
+            }
+        });
     }
-
-
-
-
 
     /****************************************
      * 画面遷移
@@ -164,31 +184,21 @@ public class ClientController {
         resultScreen.showResultScreen();
     }
 
-
-
-
-
-
+    /****************************************
+     * ログイン・登録
+     ****************************************/
     public void sendLoginRequest(String id, String password) {
-
-        LoginReqMessage msg =
-                new LoginReqMessage(id, password);
-
+        LoginReqMessage msg = new LoginReqMessage(id, password);
         clientCommunication.sendLoginRequest(msg);
     }
 
     public void handleLoginResult(LoginResultMessage result) {
-
-        if (result.success) {
+        if (result.result) {
             System.out.println("ログイン成功");
-            // ホーム画面へ
             transitionToHomeScreen();
-
         } else {
             System.out.println("ログイン失敗");
-
-            currentScreen.showMessage(
-                    "ログイン失敗: " + result.errorMessage);
+            currentScreen.showMessage("ログイン失敗: " + result.message);
         }
     }
 
@@ -198,27 +208,22 @@ public class ClientController {
     }
 
     public void handleSignUpResult(SignUpResultMessage result) {
-
-        if (result.success) {
+        if (result.result) {
             System.out.println("登録成功");
-            // ホーム画面へ
-            transitionToHomeScreen();
-
+            transitionToHomeScreen(); // またはログイン画面のまま「成功しました」と出すか
         } else {
             System.out.println("登録失敗");
-
-            currentScreen.showMessage(
-                    "登録失敗: " + result.errorMessage);
+            currentScreen.showMessage("登録失敗: " + result.message);
         }
     }
-
 
     /****************************************
      * ログアウト
      ****************************************/
     public void executeLogout() {
         clientCommunication.sendLogoutRequest();
-        transitionToLoginScreen();
+        // サーバからの応答を待たずに画面遷移するか、応答で遷移するかは設計次第
+        // ここでは応答(LOGOUT_SUCCESS)を待つ形にします
     }
 
     /****************************************
@@ -226,21 +231,25 @@ public class ClientController {
      ****************************************/
     public void notifyStartMatching() {
         MatchingReqMessage msg = new MatchingReqMessage();
+        // ユーザIDが必要ならセットする (Login成功時にControllerにIDを保存しておく必要あり)
+        // msg.id = this.myUserId;
         clientCommunication.sendMatchRequest(msg);
     }
 
     public void handleMatchingResult(MatchingResultMessage result) {
-
         if (result.success) {
-            System.out.println("マッチング成功");
-            transitionToBattleScreen();
+            System.out.println("マッチング状態: " + result.errorMessage); // WAITINGなど
+            // マッチング完了(MATCHED)なのか待機中(WAITING)なのかで処理を分ける
+            if ("MATCHED".equals(result.errorMessage)) {
+                // transitionToBattleScreen(); // STARTメッセージで遷移するならここは不要
+            } else {
+                homeScreen.showMessage("マッチング待機中...");
+            }
         } else {
             System.out.println("マッチング失敗");
-            currentScreen.showMessage(
-                    "マッチング失敗: " + result.errorMessage);
+            currentScreen.showMessage("マッチング失敗: " + result.errorMessage);
         }
     }
-
 
     /****************************************
      * バトル関連
@@ -250,35 +259,31 @@ public class ClientController {
     public void sendBattleInfo(int betBanana) {
         AppMessage msg = new AppMessage();
         msg.betBananas = betBanana;
-        msg.type = AppMessage.Type.valueOf("BET");
+        msg.type = AppMessage.Type.BET; // valueOfを使わず直接指定でOK
         applicationCommunication.send(msg);
     }
 
-    // ROLL用の通信
-    public void sendBattleInfo(){
+    // ROLL用の通信 (メソッド名が被っていますが、引数違いなのでOK)
+    public void sendBattleInfo() {
         AppMessage msg = new AppMessage();
-        msg.type = AppMessage.Type.valueOf("ROLL");
+        msg.type = AppMessage.Type.ROLL;
         applicationCommunication.send(msg);
     }
 
-
-    public void showRollDisplay(int playerId){
-        System.out.println("ROLL PHASE : "+playerId);
-        //　int playerId番目のプレイヤのロール
-    }
-
-
-
-
+    // 画面更新
     public void updateBattleStatus(List<AppMessage.PlayerState> players) {
-        battleScreen.updateScreen(players);
+        if (players != null) {
+            battleScreen.updateScreen(players);
+        }
     }
 
-    public void handleScreenTransition() {
+    // サイコロ演出など
+    public void showRollDisplay(int playerId) {
+        System.out.println("ROLL PHASE : " + playerId);
+        // battleScreen.animateDice(playerId); // 必要ならメソッド追加
     }
 
     public void showMessage(String message) {
         currentScreen.showMessage(message);
     }
-
 }

@@ -7,7 +7,7 @@ import javax.swing.*;
 public abstract class Screen extends JPanel {
 
     protected ClientController controller;
-    protected static JFrame frame; // 共有フレーム
+    public static JFrame frame; // 共有フレーム
 
     public Screen(ClientController controller) {
         this.controller = controller;

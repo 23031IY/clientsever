@@ -54,12 +54,12 @@ public class UITestMain {
                 // テストルール：password が "ok" なら成功、それ以外は失敗
                 if ("ok".equals(password)) {
                     res.type = "LOGIN_SUCCES";
-                    res.success = true;
-                    res.errorMessage = null;
+                    res.result = true;
+                    res.message = null;
                 } else {
                     res.type = "LOGIN_FAILURE";
-                    res.success = false;
-                    res.errorMessage = "パスワードが違います（テスト）";
+                    res.result = false;
+                    res.message = "パスワードが違います（テスト）";
                 }
 
                 handleLoginResult(res);
@@ -77,12 +77,12 @@ public class UITestMain {
                 // テストルール：id が "taken" なら失敗、それ以外は成功
                 if ("taken".equalsIgnoreCase(id)) {
                     res.type = "RESISTER_FAILURE";
-                    res.success = false;
-                    res.errorMessage = "そのユーザ名は使用済みです（テスト）";
+                    res.result = false;
+                    res.message = "そのユーザ名は使用済みです（テスト）";
                 } else {
                     res.type = "RESISTER_SUCCES";
-                    res.success = true;
-                    res.errorMessage = null;
+                    res.result = true;
+                    res.message = null;
                 }
 
                 handleSignUpResult(res);

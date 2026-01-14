@@ -148,12 +148,27 @@
 
         // マッチング結果
         if (type === "MATCH_STATUS") {
-            if (json.success) {
-                HomeScreen.setStatus("マッチング成功！");
-                // battle画面へ（未作成なら後で追加）
-                location.href = "./battle.html";
+            // メッセージ内容で判定する
+            const msg = json.message || "";
+
+            if (msg === "MATCHED") {
+                // 4人揃った！
+                HomeScreen.setStatus("マッチング成立！バトル画面へ移動します...");
+                setTimeout(() => {
+                    location.href = "./battle.html";
+                }, 1000); // 少し余韻を持たせる
+
+            } else if (msg.startsWith("WAITING")) {
+                // 待機中（まだ遷移しない）
+                HomeScreen.setStatus("マッチング待機中... " + msg); // "WAITING(1)" などが表示される
+
+            } else if (msg === "TIMEOUT_DISMISSED") {
+                // タイムアウト解散
+                HomeScreen.setStatus("マッチングが成立しませんでした（タイムアウト）");
+
             } else {
-                HomeScreen.setStatus("マッチング失敗: " + (json.errorMessage ?? ""));
+                // その他のエラー
+                HomeScreen.setStatus("ステータス: " + msg);
             }
             return;
         }
