@@ -2,16 +2,26 @@ package doundary;
 
 import control.ClientController;
 
-public abstract class Screen {
+import javax.swing.*;
+
+public abstract class Screen extends JPanel {
 
     protected ClientController controller;
+    protected static JFrame frame; // 共有フレーム
 
     public Screen(ClientController controller) {
         this.controller = controller;
     }
 
-    // 画面共通のメッセージ表示
     public void showMessage(String message) {
-        System.out.println("[MESSAGE] " + message);
+        JOptionPane.showMessageDialog(this, message);
+    }
+
+    protected void switchScreen(JPanel panel) {
+        frame.setContentPane(panel);
+        frame.revalidate();
+        frame.repaint();
+        frame.setVisible(true);
     }
 }
+
