@@ -231,18 +231,21 @@
 
                 // ========== 修正: 役成立時の処理 ==========
                 if (msg.hand && msg.hand.handStrength > 0) {
+                    setTimeout(() => {
                     info += " → 役: " + msg.hand.handName + "！";
                     toast(info);
 
                     // ★カットイン表示
                     showCutIn(msg.hand.handName);
-
+                    }, 2000);
                 } else {
                     info += " (やり直し " + msg.rerollCount + "回目)";
                 }
 
                 if (msg.playerId === myPlayerId && !msg.isFinal) {
+                    setTimeout(() => {
                     showRollUI(true);
+                    }, 2000);
                 } else {
                     showRollUI(false);
                 }
