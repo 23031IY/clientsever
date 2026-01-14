@@ -1,3 +1,5 @@
+//boundary -> doundary になっている箇所を修正しようか迷ったが別プロジェクトへ修正が波及しそうなので静観する
+
 package doundary;
 
 import communication.message.AppMessage;

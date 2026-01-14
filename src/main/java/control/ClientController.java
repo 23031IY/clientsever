@@ -6,7 +6,7 @@ import com.google.gson.JsonParser;
 import communication.ApplicationCommunication;
 import communication.ClientCommunication;
 import communication.message.*;
-import doundary.*; // パッケージ名はそのままでいきます
+import doundary.*; // パッケージ名はそのままでいきます　＞わかりました
 
 import javax.swing.SwingUtilities;
 import java.util.List;
