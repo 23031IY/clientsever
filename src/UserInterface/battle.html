@@ -76,6 +76,41 @@
             text-shadow: 4px 4px 0px #8b4513;
             letter-spacing: 10px;
         }
+
+
+        /* ラウンド結果ポップアップ */
+        #round-result-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            display: flex; justify-content: center; align-items: center;
+            opacity: 0; transition: opacity 0.5s;
+        }
+        #round-result-overlay.show { opacity: 1; }
+
+        .round-result-box {
+            background: #fff; border: 5px solid #8b4513; border-radius: 20px;
+            padding: 30px; width: 500px; text-align: center;
+            box-shadow: 0 0 30px rgba(255, 204, 0, 0.5);
+        }
+        .round-winner-title {
+            font-size: 2.5rem; color: #d35b31; margin: 0 0 20px 0;
+            text-shadow: 2px 2px 0px #fff;
+        }
+        .round-result-list {
+            margin-bottom: 20px; border-top: 2px dashed #ccc; border-bottom: 2px dashed #ccc;
+            padding: 10px 0;
+        }
+        .round-result-item {
+            display: flex; justify-content: space-between; font-size: 1.5rem; margin: 8px 0;
+        }
+        .diff-plus { color: #e91e63; font-weight: bold; }
+        .diff-minus { color: #3f51b5; }
+        .diff-zero { color: #777; }
+        .next-dealer-info {
+            font-size: 1.2rem; color: #8b4513; font-weight: bold; background: #fff8e1;
+            padding: 10px; border-radius: 10px; display: inline-block;
+        }
     </style>
 </head>
 <body>
@@ -87,6 +122,15 @@
         <div class="yaku-text-vertical" id="cutin-text-left">役名</div>
         <img src="" id="monkey-photo" class="monkey-img" alt="演出画像">
         <div class="yaku-text-vertical" id="cutin-text-right">役名</div>
+    </div>
+</div>
+
+<div id="round-result-overlay" style="display:none;">
+    <div class="round-result-box">
+        <h2 class="round-winner-title" id="round-winner-text">誰も勝てませんでした...</h2>
+        <div id="round-result-list" class="round-result-list">
+        </div>
+        <div class="next-dealer-info" id="next-dealer-text">次は 〇〇 が親です</div>
     </div>
 </div>
 
@@ -156,7 +200,8 @@
 
     const WAIT_AFTER_ROLL_MS = 300;  // ROLL表示の最低時間
     const WAIT_HAND_MS = 1500;       // HAND表示の最低時間（役カットイン等のため）
-    const WAIT_AFTER_RESULT_MS = 500;
+    const WAIT_AFTER_RESULT_MS = 2000;
+    const WAIT_ROUND_RESULT_MS = 4000;//ラウンド結果の表示時間
 
     function sleep(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
@@ -339,6 +384,14 @@
                 }
                 break;
 
+            case "ROUND_RESULT"://ラウンド結果
+                stopRolling();
+                showRollUI(false);
+
+                // オーバーレイを表示して待機
+                await showRoundResult(msg.roundResults);
+                break;
+
 
             case "RESULT":
                 stopRolling();
@@ -360,6 +413,74 @@
                 // すでに renderPlayers しているのでここは何もしなくてOK
                 break;
         }
+    }
+
+    //======ラウンド結果======
+
+    function showRoundResult(results) {
+        return new Promise(resolve => {
+            const overlay = document.getElementById("round-result-overlay");
+            const title = document.getElementById("round-winner-text");
+            const list = document.getElementById("round-result-list");
+            const nextText = document.getElementById("next-dealer-text");
+
+            list.innerHTML = "";
+
+            // 勝者（バナナが増えた人）を探す
+            const winners = results.filter(r => r.isWinner);
+            if (winners.length > 0) {
+                const names = winners.map(w => w.name).join(" & ");
+                title.innerText = `${names} の勝ち！`;
+                title.style.color = "#d35b31";
+            } else {
+                title.innerText = "引き分け / 変動なし";
+                title.style.color = "#777";
+            }
+
+            // 次の親
+            const nextDealer = results.find(r => r.isNextDealer);
+            if (nextDealer) {
+                nextText.innerText = `次は ${nextDealer.name} が親(ボス猿)です`;
+            }
+
+            // 各プレイヤーの増減を表示
+            results.forEach(r => {
+                const row = document.createElement("div");
+                row.className = "round-result-item";
+
+                let diffStr = "";
+                let diffClass = "diff-zero";
+                if (r.bananaDiff > 0) {
+                    diffStr = `+${r.bananaDiff}`;
+                    diffClass = "diff-plus";
+                } else if (r.bananaDiff < 0) {
+                    diffStr = `${r.bananaDiff}`; // マイナスは数値に含まれる
+                    diffClass = "diff-minus";
+                } else {
+                    diffStr = "±0";
+                }
+
+                row.innerHTML = `
+                    <span>${r.name}</span>
+                    <span class="${diffClass}">${diffStr}🍌</span>
+                `;
+                list.appendChild(row);
+            });
+
+            // 表示アニメーション
+            overlay.style.display = "flex";
+            // わずかに遅らせてCSS transitionを発火
+            requestAnimationFrame(() => overlay.classList.add("show"));
+
+            // 一定時間後に非表示
+            setTimeout(() => {
+                overlay.classList.remove("show");
+                setTimeout(() => {
+                    overlay.style.display = "none";
+                    resolve(); // 処理完了を通知
+                }, 500); // フェードアウト待ち
+            }, WAIT_ROUND_RESULT_MS);
+        });
     }
 
 
