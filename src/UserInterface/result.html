@@ -152,9 +152,25 @@
     /* ===========================
        最終結果画面（GAME END）
     =========================== */
+
+
     const ResultScreen = {
 
+        sounds: [
+            new Audio("./sounds/clap.mp3"),
+            new Audio("./sounds/fukuro_cry.mp3"),
+            new Audio("./sounds/naga_cry.mp3"),
+            new Audio("./sounds/kuro_cry.mp3")
+        ],
+
         showResult(msg) {
+
+            this.sounds.forEach(audio => {
+                audio.currentTime = 0;
+                audio.play().catch(e => console.log("再生エラー:", e));
+            });
+
+
             if (!msg || !msg.players) return;
 
             // 点数キーの候補（存在するものを優先）

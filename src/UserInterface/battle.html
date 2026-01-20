@@ -4,6 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <title>チンチロリン - バトル</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Yuji+Syuku&display=swap" rel="stylesheet">
     <div id="my-id-disp" style="margin-top:6px; font-size:1.2rem; color:#8b4513;">ID:-</div>
     <style>
         @font-face { font-family: 'BananaSlip'; src: url('YDWbananaslipplus.otf') format('opentype'); }
@@ -21,7 +24,22 @@
         .player-card.is-dealer { background-color: #fff8e1; }
         .player-card.is-turn { background-color: #e0f7fa; transform: scale(1.05); transition: 0.3s; }
 
-        .dealer-badge { position: absolute; top: -10px; right: -10px; background: gold; border: 1px solid #000; padding: 2px 8px; font-size: 0.8rem; border-radius: 10px;}
+        .dealer-badge {
+            position: absolute;
+            top: -15px;
+            right: -10px;
+            background: gold;
+            border: 2px solid #000;
+            padding: 4px 12px;
+
+            /* ★ここがポイント: 読み込んだ達筆フォントを指定 */
+            font-family: 'Yuji Syuku', serif;
+            font-size: 1.3rem;
+
+            border-radius: 8px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+            z-index: 10;
+        }
 
         .info-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
 
@@ -46,35 +64,64 @@
             z-index: 1000;
             color: white;
             opacity: 0;
-            transition: opacity 0.3s;
+            transition: opacity 1s ease;
         }
         #cutin-overlay.show { opacity: 1; }
 
         .cutin-content {
-            display: flex;
-            align-items: center;
-            gap: 40px;
+            /* フレックスボックス(横並び)をやめ、画面全体を使う設定に変更 */
+            position: relative;
+            width: 100%;
+            height: 100%;
+
+            /* アニメーション用 */
             transform: scale(0.8);
-            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: transform 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        #cutin-overlay.show .cutin-content { transform: scale(1); }
+        /*#cutin-overlay.show .cutin-content { transform: scale(1); }*/
 
         .monkey-img {
-            width: 600px;
-            height: 450px;
-            border: 8px solid white;
-            object-fit: cover;
-            box-shadow: 0 0 50px rgba(255, 215, 0, 0.5);
+            /* 画面いっぱいに表示 */
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+
+            /* 画像の縦横比を保ったまま画面に収めるなら 'contain' */
+            /* 画面全体を隙間なく埋めるなら 'cover' (上下左右が切れる場合あり) */
+            object-fit: contain;
+
+            /* 枠線などを削除 */
+            border: none;
+            box-shadow: none;
+            z-index: 1; /* 文字より奥に */
         }
 
+        /* 修正前: font-family: 'BananaSlip', sans-serif; */
+
         .yaku-text-vertical {
-            font-family: 'BananaSlip', sans-serif;
+            font-family: 'Yuji Syuku', serif; /* 前回のフォント設定を維持 */
             font-size: 6rem;
             writing-mode: vertical-rl;
             text-orientation: upright;
             color: #ffcc00;
-            text-shadow: 4px 4px 0px #8b4513;
+            text-shadow: 4px 4px 0px #8b4513, -2px -2px 0px #000; /* 文字が見やすいように影を強化 */
             letter-spacing: 10px;
+
+            /* 画像の上に配置するための絶対配置 */
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 2; /* 画像より手前に */
+        }
+
+        #cutin-text-left {
+            left: 5%;
+        }
+
+        #cutin-text-right {
+            right: 5%;
         }
 
 
@@ -191,6 +238,9 @@
 
     const betSound = new Audio("./sounds/monkey_cry.mp3");//賭けるときのSE
     betSound.volume = 1.0;
+
+    const roundSound = new Audio("./sounds/round_change.mp3");
+    roundSound.volume = 1.0;
 
 
 
@@ -419,6 +469,9 @@
 
     function showRoundResult(results) {
         return new Promise(resolve => {
+            roundSound.currentTime = 0;
+            roundSound.play().catch(e => console.log("再生エラー:", e));
+
             const overlay = document.getElementById("round-result-overlay");
             const title = document.getElementById("round-winner-text");
             const list = document.getElementById("round-result-list");
@@ -486,8 +539,25 @@
 
     // ===== 送信 =====
     function sendBet() {
+        const inputEl = document.getElementById("bet-input");
         const amount = parseInt(document.getElementById("bet-input").value);
-        if (!amount || amount <= 0) return;
+
+        if (!amount || amount <= 0) {
+            toast("1本以上のバナナを賭けてください！");
+            return;
+        }
+
+        // lastPlayersData から自分の最新情報を取得
+        const me = lastPlayersData.find(p => p.playerId === myPlayerId);
+
+        if (me) {
+            if (amount > me.ownedBananas) {
+                // 所持数オーバーなら送信せず、警告を出して終了（UIは消さない）
+                toast(`所持バナナが足りません！`);
+                inputEl.value = me.ownedBananas; // 親切に入力値を所持金最大にする
+                return;
+            }
+        }
 
         betSound.currentTime = 0; // 連打対策（賭けるときのSE）
         betSound.play().catch(e => console.log("再生エラー:", e));
@@ -559,7 +629,7 @@
                     setTimeout(() => {
                         overlay.style.display = "none";
                         resolve();
-                    }, 300);
+                    }, 1000);
                 }, durationMs);
             };
 
@@ -595,16 +665,16 @@
             div.className = "player-card" + (isMe ? " is-me" : "") + (p.dealer ? " is-dealer" : "");
 
             div.innerHTML = `
-                ${p.dealer ? '<div class="dealer-badge">ボス猿</div>' : ''}
+                ${p.dealer ? '<div class="dealer-badge">ボスザル</div>' : ''}
                 <div class="info-row">
                     <strong>${p.name}</strong>
                     <span>ID:${p.playerId}</span>
                 </div>
                 <div class="info-row">
-                    <span>所持: ${p.ownedBananas}🍌</span>
+                    <span>所持バナナ: ${p.ownedBananas}🍌</span>
                 </div>
                 <div class="info-row" style="background:#eee; padding:2px;">
-    <span>賭け: ${(
+    <span>賭けバナナ: ${(
                 (p.currentBetBananas ?? p.betBananas ?? 0)
             )}🍌</span>
 </div>
