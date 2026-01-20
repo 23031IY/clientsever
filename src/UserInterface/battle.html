@@ -110,6 +110,15 @@
 
 <div class="players-area" id="players-wrapper"></div>
 <script>
+    /*
+    * やりたいこと(1/15)
+    * 役確定->画像表示までのタイムラグ設定
+    * デバッグ用ボタンの除去
+    * 効果音設定
+    * */
+
+
+
     const GAME_SERVER_URL = "ws://localhost:8082/GameServer/ws";
 
     let ws = null;
@@ -262,6 +271,8 @@
                 showRollUI(false);
 
                 renderDice(msg.eyesRolled);
+
+                await sleep(2000);//タイムラグ設定(1/15)
 
                 if (msg.hand && msg.hand.handStrength > 0) {
                     toast(`Player ${msg.playerId} の出目: ${msg.eyesRolled} → 役: ${msg.hand.handName}！`);
