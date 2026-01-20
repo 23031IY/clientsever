@@ -8,54 +8,53 @@ import communication.message.MatchingResultMessage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import javax.swing.JFrame;
-import doundary.Screen; // Screenクラスのパッケージに合わせて変更してください
+import doundary.Screen;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * 既存のロジックを極力変えず、NPEを回避するテスト
- */
+
 public class ClientControllerTest {
 
     private dummy controller;
 
     @BeforeEach
     void setUp() {
-        // --- 強制回避策：Screen.frame が null だから落ちるため、空の JFrame を入れる ---
         if (Screen.frame == null) {
             Screen.frame = new JFrame();
         }
 
-        // dummy のコンストラクタ内で super() が呼ばれても、
-        // Screen.frame が null でなければ setContentPane で落ちなくなります
         controller = new dummy(new ClientCommunication(), new ApplicationCommunication());
     }
 
+    //ログイン成功
     @Test
     void testLoginSuccess() {
         controller.sendLoginRequest("user1", "ok");
-        // controller.lastResult などのフラグをチェックするように修正
         assertTrue(controller.isLastProcessSuccess(), "ログイン成功時にフラグがtrueになること");
     }
 
+    //ログイン失敗
     @Test
     void testLoginFailure() {
         controller.sendLoginRequest("user1", "ng");
         assertFalse(controller.isLastProcessSuccess(), "ログイン失敗時にフラグがfalseになること");
     }
 
+    //サインアップ重複
     @Test
     void testSignUpTaken() {
         controller.sendSignUpRequest("taken", "pass");
         assertFalse(controller.isLastProcessSuccess());
     }
 
+    //サインアップ成功
     @Test
     void testSignUpSuccess() {
         controller.sendSignUpRequest("newuser", "pass");
         assertTrue(controller.isLastProcessSuccess());
     }
 
+    //マッチング開始
     @Test
     void testMatching() {
         controller.notifyStartMatching();
@@ -63,7 +62,7 @@ public class ClientControllerTest {
     }
 }
 
-// --- dummy クラスの修正 ---
+
 
 class dummy extends control.ClientController {
     // 処理結果を保存する変数
@@ -71,7 +70,6 @@ class dummy extends control.ClientController {
 
     public dummy(ClientCommunication c, ApplicationCommunication a) {
         super(c, a);
-        // 親のコンストラクタが終わった後、改めてGUIをnullで上書き（安全のため）
         loginScreen = null;
         signUpScreen = null;
         homeScreen = null;
@@ -83,11 +81,11 @@ class dummy extends control.ClientController {
         return lastProcessSuccess;
     }
 
-    // --- メッセージ受信ハンドラをオーバーライドして結果をキャッチ ---
+
     @Override
     public void handleLoginResult(LoginResultMessage res) {
         this.lastProcessSuccess = res.result;
-        // super.handleLoginResult(res); // 画面遷移で落ちるなら呼ばない
+
     }
 
     @Override
@@ -100,7 +98,7 @@ class dummy extends control.ClientController {
         this.lastProcessSuccess = res.success;
     }
 
-    // --- 画面遷移メソッドを完全に無効化（ここでGUIを触らせない） ---
+
     @Override public void transitionToLoginScreen() {}
     @Override public void transitionToSignUpScreen() {}
     @Override public void transitionToHomeScreen() {}
