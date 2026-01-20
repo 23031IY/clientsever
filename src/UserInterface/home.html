@@ -96,6 +96,12 @@
 <script type="module">
     import { connect, send } from "./app.js";
 
+    //////////////    SE     //////////////////////
+    const matchSound = new Audio("./sounds/footsteps.mp3");//マッチング開始時のSE
+    matchSound.volume = 1.0;
+
+    //////////////////////////////////////////////////////
+
     /* ===========================
        HomeScreen 相当（本番）
     =========================== */
@@ -118,6 +124,11 @@
                 location.href = "./login.html";
                 return;
             }
+
+            matchSound.currentTime = 0;//マッチング開始時のSE鳴らす
+            matchSound.play().catch(e => console.log("再生エラー:", e));
+
+
             // マッチング要求（サーバ仕様に合わせる）
             send({ type: "MATCHING", id: id });
             this.setStatus("マッチング中...");

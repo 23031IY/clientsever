@@ -142,6 +142,11 @@
         "クロザル": "./sounds/kuro_cry.mp3",
         "ナガ・クロザル": ["./sounds/naga_cry.mp3", "./sounds/kuro_cry.mp3"]
     };
+    const stopSound = new Audio("./sounds/dice_stop.mp3");//サイコロSE
+    stopSound.volume = 0.8;
+
+    const betSound = new Audio("./sounds/monkey_cry.mp3");//賭けるときのSE
+    betSound.volume = 1.0;
 
 
 
@@ -210,7 +215,20 @@
 
         ws.onopen = () => {
             log("サーバに接続しました");
-            send({ phase: "START" });
+
+            // 自分の名前を取得して送信する(クライアント名とプレイヤー名の整合性のための処置。APサーバのSingleGame~クラスを参考)
+            const myName = sessionStorage.getItem("userId");
+            if (!myName) {
+                toast("ログイン情報が見つかりません。ホームへ戻ります。");
+                setTimeout(() => location.href = "./home.html", 2000);
+                return;
+            }
+
+            // clientName を付与して START
+            send({
+                phase: "START",
+                clientName: myName
+            });
         };
 
         ws.onmessage = (event) => {
@@ -288,6 +306,10 @@
                 break;
 
             case "HAND":
+                // ★追加: ここで停止音を再生（全員のブラウザで実行される）
+                stopSound.currentTime = 0; // 連続再生用に巻き戻し
+                stopSound.play().catch(e => console.log("再生エラー(初回操作前など):", e));
+
                 stopRolling();
                 showRollUI(false); // 一旦ボタンを隠す
 
@@ -345,6 +367,9 @@
     function sendBet() {
         const amount = parseInt(document.getElementById("bet-input").value);
         if (!amount || amount <= 0) return;
+
+        betSound.currentTime = 0; // 連打対策（賭けるときのSE）
+        betSound.play().catch(e => console.log("再生エラー:", e));
 
         send({
             phase: "BET",
