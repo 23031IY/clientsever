@@ -133,6 +133,16 @@
         "ナガ・クロザル": "./naga.jpg"
     };
 
+    // 役に対応した効果音の設定
+    const yakuSounds = {
+        "フクロテナガザル": "./sounds/fukuro_cry.mp3", // ファイルパスは適宜変更してください
+        "テナガザル": "./sounds/naga_cry.mp3",
+        "ナガザル": "./sounds/naga_cry.mp3",
+        "クロザル": "./sounds/kuro_cry.mp3",
+        "ナガ・クロザル": ["./sounds/naga_cry.mp3", "./sounds/kuro_cry.mp3"]
+    };
+
+
 
     // ===== 受信メッセージを直列処理するキュー =====
     const messageQueue = [];
@@ -268,23 +278,32 @@
 
             case "HAND":
                 stopRolling();
-                showRollUI(false);
+                showRollUI(false); // 一旦ボタンを隠す
 
                 renderDice(msg.eyesRolled);
 
-                await sleep(2000);//タイムラグ設定(1/15)
+                // 2秒のタイムラグ（演出用）
+                await sleep(2000);
 
                 if (msg.hand && msg.hand.handStrength > 0) {
+                    // --- 役があった場合 ---
                     toast(`Player ${msg.playerId} の出目: ${msg.eyesRolled} → 役: ${msg.hand.handName}！`);
-
-                    // ★重要：カットインが終わるまで待つ（途中でRESULTに進ませない）
                     await showCutInAsync(msg.hand.handName, 2600);
-
                 } else {
-                    toast(`Player ${msg.playerId} の出目: ${msg.eyesRolled} (やり直し ${msg.rerollCount}回目)`);
+                    // --- 役が出なかった場合（やり直し） ---
+                    toast(`Player ${msg.playerId} は役なし... (やり直し ${msg.rerollCount}回目)`);
+
+                    // 自分の番であれば、再び「止める」ボタンを表示して入力を待つ
+                    if (msg.playerId === myPlayerId) {
+                        const btn = document.getElementById("roll-btn");
+                        btn.textContent = "止める"; // または「もう一度振る」
+                        showRollUI(true);
+                        startRolling(); // 再びサイコロを回転させる
+                        toast("役が出ませんでした。自動で振りなおします。");
+                    }
+
                     await sleep(WAIT_HAND_MS);
                 }
-
                 break;
 
 
@@ -363,8 +382,18 @@
             rightText.innerText = handName;
 
             const imgSrc = yakuImages[handName];
+            ///////////////////////////////////////////////
+            //音声ファイルの差し込み
+            ///////////////////////////////////////////////
+            const soundSrc = yakuSounds[handName];
 
             const startShow = () => {
+                if (soundSrc) {
+                    //音声再生/////////////////////////////////////
+                    const audio = new Audio(soundSrc);
+                    audio.volume = 0.5; // 音量（0.0〜1.0）
+                    audio.play().catch(e => console.error("音声再生エラー:", e));
+                }//ここまで音声再生//////////////////////////////////////////////
                 overlay.style.display = "flex";
                 requestAnimationFrame(() => overlay.classList.add("show"));
 
@@ -449,9 +478,9 @@
     // ★「止める」ボタン表示（ROLLの playerId が自分のときだけ使う）
     function showRollUI(show) {
         const btn = document.getElementById("roll-btn");
-        btn.textContent = "止める";
+        // テキストは呼び出し元で制御できるように、ここでは強制変更しない
         btn.style.display = show ? "inline-block" : "none";
-        btn.disabled = !show;
+        btn.disabled = false; // ★ showの時に必ず押せるようにする
         document.getElementById("bet-ui").style.display = "none";
     }
 
