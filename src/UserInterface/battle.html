@@ -123,6 +123,7 @@
 
     let ws = null;
     let myPlayerId = null;
+    let lastPlayersData = [];//プレイヤーリスト保存用についかした
 
     // 役名と画像ファイルのひもづけ
     const yakuImages = {
@@ -235,8 +236,8 @@
             return;
         }
 
-        // players更新は即時でOK（画面の追従）
         if (msg.players) {
+            lastPlayersData = msg.players;
             renderPlayers(msg.players);
         }
 
@@ -255,8 +256,18 @@
             case "BET":
                 stopRolling();
                 showRollUI(false);
-                updatePhaseDisplay("賭けタイム");
-                showBetUI(true);
+
+                // 自分の状態を探す
+                const me = lastPlayersData.find(p => p.playerId === myPlayerId);
+
+                // 自分が親(dealer)ならUIを出さずに待機メッセージ
+                if (me && me.dealer) {
+                    updatePhaseDisplay("子が賭けるのを待っています..."); // 親用メッセージ
+                    showBetUI(false); // UIは隠す
+                } else {
+                    updatePhaseDisplay("賭けタイム"); // 子用メッセージ
+                    showBetUI(true);  // UIを表示
+                }
                 break;
 
             case "ROLL":
