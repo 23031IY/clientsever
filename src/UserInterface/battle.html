@@ -4,6 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <title>チンチロリン - バトル</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Yuji+Syuku&display=swap" rel="stylesheet">
+    <div id="my-id-disp" style="margin-top:6px; font-size:1.2rem; color:#8b4513;">ID:-</div>
     <style>
         @font-face { font-family: 'BananaSlip'; src: url('YDWbananaslipplus.otf') format('opentype'); }
         body {
@@ -11,7 +15,6 @@
             background-color: #f7e7ce;
             margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 20px;
         }
-        /* UIパーツのスタイル (共通) */
         .dice-container { display: flex; gap: 15px; margin: 20px 0; min-height: 80px;}
         .dice { width: 60px; height: 60px; background: white; border: 2px solid #555; display: flex; justify-content: center; align-items: center; font-size: 2rem; border-radius: 8px;}
 
@@ -21,10 +24,24 @@
         .player-card.is-dealer { background-color: #fff8e1; }
         .player-card.is-turn { background-color: #e0f7fa; transform: scale(1.05); transition: 0.3s; }
 
-        .dealer-badge { position: absolute; top: -10px; right: -10px; background: gold; border: 1px solid #000; padding: 2px 8px; font-size: 0.8rem; border-radius: 10px;}
+        .dealer-badge {
+            position: absolute;
+            top: -15px;
+            right: -10px;
+            background: gold;
+            border: 2px solid #000;
+            padding: 4px 12px;
+
+            /* ★ここがポイント: 読み込んだ達筆フォントを指定 */
+            font-family: 'Yuji Syuku', serif;
+            font-size: 1.3rem;
+
+            border-radius: 8px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+            z-index: 10;
+        }
 
         .info-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
-        .hand-name { font-weight: bold; color: #d35b31; font-size: 1.2rem; text-align: center; margin: 5px 0;}
 
         .action-area { margin-top: 20px; padding: 20px; background: rgba(255,255,255,0.8); border-radius: 10px; text-align: center; min-height: 100px; display: flex; flex-direction: column; justify-content: center; align-items: center;}
 
@@ -34,56 +51,112 @@
         .msg-box { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 10px 20px; border-radius: 20px; opacity: 0; transition: 0.5s; pointer-events: none; z-index: 1001;}
         .msg-box.show { opacity: 1; top: 30px; }
 
-        /* デバッグ用 */
         #debug-panel { position: fixed; bottom: 0; left: 0; background: #eee; padding: 5px; font-size: 0.8rem; opacity: 0.8; z-index: 900;}
 
-        /* ========== 追加: カットイン演出用のスタイル ========== */
         #cutin-overlay {
             position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
             background-color: rgba(0,0,0,0.85);
-            display: none; /* デフォルト非表示 */
+            display: none;
             justify-content: center;
             align-items: center;
             z-index: 1000;
             color: white;
             opacity: 0;
-            transition: opacity 0.3s;
+            transition: opacity 1s ease;
         }
-        #cutin-overlay.show {
-            opacity: 1;
-        }
+        #cutin-overlay.show { opacity: 1; }
 
         .cutin-content {
-            display: flex;
-            align-items: center;
-            gap: 40px;
+            /* フレックスボックス(横並び)をやめ、画面全体を使う設定に変更 */
+            position: relative;
+            width: 100%;
+            height: 100%;
+
+            /* アニメーション用 */
             transform: scale(0.8);
-            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: transform 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        #cutin-overlay.show .cutin-content {
-            transform: scale(1);
-        }
+        /*#cutin-overlay.show .cutin-content { transform: scale(1); }*/
 
-        /* 画像スタイル */
         .monkey-img {
-            width: 600px;  /* 画面に合わせて調整 */
-            height: 450px;
-            border: 8px solid white;
-            object-fit: cover;
-            box-shadow: 0 0 50px rgba(255, 215, 0, 0.5);
+            /* 画面いっぱいに表示 */
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+
+            /* 画像の縦横比を保ったまま画面に収めるなら 'contain' */
+            /* 画面全体を隙間なく埋めるなら 'cover' (上下左右が切れる場合あり) */
+            object-fit: contain;
+
+            /* 枠線などを削除 */
+            border: none;
+            box-shadow: none;
+            z-index: 1; /* 文字より奥に */
         }
 
-        /* 縦書きテキスト */
+        /* 修正前: font-family: 'BananaSlip', sans-serif; */
+
         .yaku-text-vertical {
-            font-family: 'BananaSlip', sans-serif;
+            font-family: 'Yuji Syuku', serif; /* 前回のフォント設定を維持 */
             font-size: 6rem;
             writing-mode: vertical-rl;
             text-orientation: upright;
             color: #ffcc00;
-            text-shadow: 4px 4px 0px #8b4513;
+            text-shadow: 4px 4px 0px #8b4513, -2px -2px 0px #000; /* 文字が見やすいように影を強化 */
             letter-spacing: 10px;
+
+            /* 画像の上に配置するための絶対配置 */
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 2; /* 画像より手前に */
+        }
+
+        #cutin-text-left {
+            left: 5%;
+        }
+
+        #cutin-text-right {
+            right: 5%;
+        }
+
+
+        /* ラウンド結果ポップアップ */
+        #round-result-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            display: flex; justify-content: center; align-items: center;
+            opacity: 0; transition: opacity 0.5s;
+        }
+        #round-result-overlay.show { opacity: 1; }
+
+        .round-result-box {
+            background: #fff; border: 5px solid #8b4513; border-radius: 20px;
+            padding: 30px; width: 500px; text-align: center;
+            box-shadow: 0 0 30px rgba(255, 204, 0, 0.5);
+        }
+        .round-winner-title {
+            font-size: 2.5rem; color: #d35b31; margin: 0 0 20px 0;
+            text-shadow: 2px 2px 0px #fff;
+        }
+        .round-result-list {
+            margin-bottom: 20px; border-top: 2px dashed #ccc; border-bottom: 2px dashed #ccc;
+            padding: 10px 0;
+        }
+        .round-result-item {
+            display: flex; justify-content: space-between; font-size: 1.5rem; margin: 8px 0;
+        }
+        .diff-plus { color: #e91e63; font-weight: bold; }
+        .diff-minus { color: #3f51b5; }
+        .diff-zero { color: #777; }
+        .next-dealer-info {
+            font-size: 1.2rem; color: #8b4513; font-weight: bold; background: #fff8e1;
+            padding: 10px; border-radius: 10px; display: inline-block;
         }
     </style>
 </head>
@@ -99,13 +172,21 @@
     </div>
 </div>
 
+<div id="round-result-overlay" style="display:none;">
+    <div class="round-result-box">
+        <h2 class="round-winner-title" id="round-winner-text">誰も勝てませんでした...</h2>
+        <div id="round-result-list" class="round-result-list">
+        </div>
+        <div class="next-dealer-info" id="next-dealer-text">次は 〇〇 が親です</div>
+    </div>
+</div>
+
 <div style="text-align: center;">
     <h1 style="margin: 0; color: #8b4513;">バトル画面</h1>
     <div id="status-text">接続待機中...</div>
 </div>
 
-<div class="dice-container" id="main-dice-area">
-</div>
+<div class="dice-container" id="main-dice-area"></div>
 
 <div class="action-area" id="action-panel">
     <div id="instruction-text">ゲーム開始を待っています...</div>
@@ -114,83 +195,162 @@
             <input type="number" id="bet-input" value="100" style="font-size:1.2rem; width:80px;">
             <button onclick="sendBet()">賭ける</button>
         </div>
-        <button id="roll-btn" style="display:none;" onclick="sendRoll()">サイコロを振る</button>
+        <button id="roll-btn" style="display:none;" onclick="sendRoll()">止める</button>
     </div>
 </div>
 
 <div class="players-area" id="players-wrapper"></div>
-
-<div id="debug-panel">
-    My Player ID: <span id="my-id-disp">-</span>
-    <button onclick="forceBind(1)">ID=1として参加</button>
-    <button onclick="forceBind(2)">ID=2として参加</button>
-    <button onclick="forceBind(3)">ID=3として参加</button>
-    <button onclick="forceBind(4)">ID=4として参加</button>
-</div>
-
 <script>
+    /*
+    * やりたいこと(1/15)
+    * 役確定->画像表示までのタイムラグ設定
+    * デバッグ用ボタンの除去
+    * 効果音設定
+    * */
 
-    //やること(1/14)
-    //最初のターンでプレイヤーが掛け金を設定できていない
-    //結果発表画面
 
 
-
-
-    //  ゲームサーバのポートは 8082 (WebSocket用、83はREST)
-    const GAME_SERVER_URL = "ws:///10.17.147.5:8082/GameServer/ws";
+    const GAME_SERVER_URL = "ws://localhost:8082/GameServer/ws";
 
     let ws = null;
-    let myPlayerId = null; // 自分のID (1～4)
+    let myPlayerId = null;
+    let lastPlayersData = [];//プレイヤーリスト保存用についかした
 
-    // 役名と画像ファイルのひもづけ///////////////////////////////
+    // 役名と画像ファイルのひもづけ
     const yakuImages = {
-        "フクロテナガザル": "fukurotenaga.jpg",
-        "テナガザル": "tenaga.jpg",
-        "ナガザル": "naga.jpg",
-        "クロザル": "kuro.jpg",
-        "ナガ・クロザル": "naga.jpg" // だれかがクロザルとナガザルのツーショットを登録
+        "フクロテナガザル": "./fukurotenaga.jpg",
+        "テナガザル": "./tenaga.jpg",
+        "ナガザル": "./naga.jpg",
+        "クロザル": "./kuro.jpg",
+        "ナガ・クロザル": "./naga.jpg"
     };
+
+    // 役に対応した効果音の設定
+    const yakuSounds = {
+        "フクロテナガザル": "./sounds/fukuro_cry.mp3", // ファイルパスは適宜変更してください
+        "テナガザル": "./sounds/naga_cry.mp3",
+        "ナガザル": "./sounds/naga_cry.mp3",
+        "クロザル": "./sounds/kuro_cry.mp3",
+        "ナガ・クロザル": ["./sounds/naga_cry.mp3", "./sounds/kuro_cry.mp3"]
+    };
+    const stopSound = new Audio("./sounds/dice_stop.mp3");//サイコロSE
+    stopSound.volume = 0.8;
+
+    const betSound = new Audio("./sounds/monkey_cry.mp3");//賭けるときのSE
+    betSound.volume = 1.0;
+
+    const roundSound = new Audio("./sounds/round_change.mp3");
+    roundSound.volume = 1.0;
+
+
+
+    // ===== 受信メッセージを直列処理するキュー =====
+    const messageQueue = [];
+    let processing = false;
+
+    const WAIT_AFTER_ROLL_MS = 300;  // ROLL表示の最低時間
+    const WAIT_HAND_MS = 1500;       // HAND表示の最低時間（役カットイン等のため）
+    const WAIT_AFTER_RESULT_MS = 2000;
+    const WAIT_ROUND_RESULT_MS = 4000;//ラウンド結果の表示時間
+
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    async function enqueueMessage(msg) {
+        messageQueue.push(msg);
+        if (!processing) {
+            processing = true;
+            while (messageQueue.length > 0) {
+                const next = messageQueue.shift();
+                await handleMessageAsync(next);
+            }
+            processing = false;
+        }
+    }
+
 
     // URLパラメータからIDを取得 (?id=1 など)
     const urlParams = new URLSearchParams(window.location.search);
-    if(urlParams.has('id')) {
+    if (urlParams.has('id')) {
         myPlayerId = parseInt(urlParams.get('id'));
         document.getElementById('my-id-disp').innerText = myPlayerId;
     }
 
-    // ========== 通信処理 ==========
+    // ===== サイコロ回転（疑似アニメ）制御 =====
+    let rollingTimer = null;
+    const DICE_FACES = ["フ", "ク", "ロ", "テ", "ナ", "ガ"];
 
+    function startRolling() {
+        if (rollingTimer) return; // 二重起動防止
+        rollingTimer = setInterval(() => {
+            const a = DICE_FACES[Math.floor(Math.random() * 6)];
+            const b = DICE_FACES[Math.floor(Math.random() * 6)];
+            const c = DICE_FACES[Math.floor(Math.random() * 6)];
+            const d = DICE_FACES[Math.floor(Math.random() * 6)];
+            const e = DICE_FACES[Math.floor(Math.random() * 6)];
+            const f = DICE_FACES[Math.floor(Math.random() * 6)];
+            renderDice(`${a}${b}${c}${d}${e}${f}`);
+        }, 80);
+    }
+
+
+    function stopRolling(finalEyesStr) {
+        if (rollingTimer) {
+            clearInterval(rollingTimer);
+            rollingTimer = null;
+        }
+        if (finalEyesStr) renderDice(finalEyesStr);
+    }
+
+
+    // ===== 通信処理 =====
     function connect() {
         ws = new WebSocket(GAME_SERVER_URL);
 
         ws.onopen = () => {
             log("サーバに接続しました");
-            send({ phase: "START" });
+
+            // 自分の名前を取得して送信する(クライアント名とプレイヤー名の整合性のための処置。APサーバのSingleGame~クラスを参考)
+            const myName = sessionStorage.getItem("userId");
+            if (!myName) {
+                toast("ログイン情報が見つかりません。ホームへ戻ります。");
+                setTimeout(() => location.href = "./home.html", 2000);
+                return;
+            }
+
+            // clientName を付与して START
+            send({
+                phase: "START",
+                clientName: myName
+            });
         };
 
         ws.onmessage = (event) => {
             const msg = JSON.parse(event.data);
-            handleMessage(msg);
+            enqueueMessage(msg);
         };
 
         ws.onclose = () => {
             log("切断されました");
             document.getElementById("status-text").innerText = "切断";
+            stopRolling();
+            showRollUI(false);
         };
     }
 
-    function handleMessage(msg) {
+    async function handleMessageAsync(msg) {
         console.log("Recv:", msg);
 
-        // エラーハンドリング
         if (msg.phase === "ERROR") {
             toast("エラー: " + msg.message);
+            stopRolling();
+            showRollUI(false);
             return;
         }
 
-        // 共通: プレイヤー状態の更新
         if (msg.players) {
+            lastPlayersData = msg.players;
             renderPlayers(msg.players);
         }
 
@@ -198,83 +358,209 @@
             case "START":
                 if (myPlayerId === null && msg.playerId) {
                     myPlayerId = msg.playerId;
-                    document.getElementById('my-id-disp').innerText = myPlayerId;
-                    toast("ゲームに参加しました (ID: " + myPlayerId + ")");
+                    // my-id-disp が無い場合でも落ちないように
+                    const el = document.getElementById("my-id-disp");
+                    if (el) el.innerText = myPlayerId;
                     window.history.replaceState(null, null, "?id=" + myPlayerId);
                 }
-                document.getElementById("instruction-text").innerText = "ゲーム開始！";
+                updatePhaseDisplay("ゲーム開始！");
                 break;
 
             case "BET":
-                updatePhaseDisplay("賭けタイム");
-                showBetUI(true);
+                stopRolling();
+                showRollUI(false);
+
+                // 自分の状態を探す
+                const me = lastPlayersData.find(p => p.playerId === myPlayerId);
+
+                // 自分が親(dealer)ならUIを出さずに待機メッセージ
+                if (me && me.dealer) {
+                    updatePhaseDisplay("子が賭けるのを待っています..."); // 親用メッセージ
+                    showBetUI(false); // UIは隠す
+                } else {
+                    updatePhaseDisplay("賭けタイム"); // 子用メッセージ
+                    showBetUI(true);  // UIを表示
+                }
                 break;
 
             case "ROLL":
                 updatePhaseDisplay("サイコロタイム: プレイヤー " + msg.playerId + " の番");
                 showBetUI(false);
 
+                startRolling();                 // 全員回転開始
+                await sleep(WAIT_AFTER_ROLL_MS);// ★最低表示時間
+
                 if (msg.playerId === myPlayerId) {
+                    const btn = document.getElementById("roll-btn");
+                    btn.textContent = "止める";
                     showRollUI(true);
-                    toast("あなたの番です！");
+                    toast("あなたの番です！（止めるボタンで確定）");
                 } else {
                     showRollUI(false);
                 }
                 break;
 
             case "HAND":
-                // 誰かがサイコロを振った結果
-                const pName = "Player " + msg.playerId;
-                renderDice(msg.eyesRolled); // 中央にサイコロ表示
+                // ★追加: ここで停止音を再生（全員のブラウザで実行される）
+                stopSound.currentTime = 0; // 連続再生用に巻き戻し
+                stopSound.play().catch(e => console.log("再生エラー(初回操作前など):", e));
 
-                let info = pName + " の出目: " + msg.eyesRolled;
+                stopRolling();
+                showRollUI(false); // 一旦ボタンを隠す
 
-                // ========== 修正: 役成立時の処理 ==========
+                renderDice(msg.eyesRolled);
+
+                // 2秒のタイムラグ（演出用）
+                await sleep(2000);
+
                 if (msg.hand && msg.hand.handStrength > 0) {
-                    info += " → 役: " + msg.hand.handName + "！";
-                    toast(info);
-
-                    // ★カットイン表示
-                    showCutIn(msg.hand.handName);
+                    // --- 役があった場合 ---
+                    toast(`Player ${msg.playerId} の出目: ${msg.eyesRolled} → 役: ${msg.hand.handName}！`);
+                    await showCutInAsync(msg.hand.handName, 2600);
                 } else {
-                    info += " (やり直し " + msg.rerollCount + "回目)";
-                }
+                    // --- 役が出なかった場合（やり直し） ---
+                    toast(`Player ${msg.playerId} は役なし... (やり直し ${msg.rerollCount}回目)`);
 
+                    // 自分の番であれば、再び「止める」ボタンを表示して入力を待つ
+                    if (msg.playerId === myPlayerId) {
+                        const btn = document.getElementById("roll-btn");
+                        btn.textContent = "止める"; // または「もう一度振る」
+                        showRollUI(true);
+                        startRolling(); // 再びサイコロを回転させる
+                        toast("役が出ませんでした。自動で振りなおします。");
+                    }
 
-                if (msg.playerId === myPlayerId && !msg.isFinal) {
-                    showRollUI(true);
-                } else {
-                    showRollUI(false);
+                    await sleep(WAIT_HAND_MS);
                 }
                 break;
 
+            case "ROUND_RESULT"://ラウンド結果
+                stopRolling();
+                showRollUI(false);
+
+                // オーバーレイを表示して待機
+                await showRoundResult(msg.roundResults);
+                break;
+
+
             case "RESULT":
+                stopRolling();
+                showRollUI(false);
+
                 toast(msg.message);
                 updatePhaseDisplay("結果発表: " + msg.message);
 
-                // ★ ここで最終結果（players含む）を保存
                 try {
                     localStorage.setItem("chinchi_last_result", JSON.stringify(msg));
-                } catch (e) {
-                    console.warn("結果保存に失敗:", e);
-                }
+                } catch (e) {}
 
-                setTimeout(() => {
-                    location.href = "./result.html";
-                }, 500);
+                await sleep(WAIT_AFTER_RESULT_MS);
+
+                location.href = "./result.html";
                 break;
 
-
             case "STATE":
+                // すでに renderPlayers しているのでここは何もしなくてOK
                 break;
         }
     }
 
-    // ========== 送信 ==========
+    //======ラウンド結果======
 
+    function showRoundResult(results) {
+        return new Promise(resolve => {
+            roundSound.currentTime = 0;
+            roundSound.play().catch(e => console.log("再生エラー:", e));
+
+            const overlay = document.getElementById("round-result-overlay");
+            const title = document.getElementById("round-winner-text");
+            const list = document.getElementById("round-result-list");
+            const nextText = document.getElementById("next-dealer-text");
+
+            list.innerHTML = "";
+
+            // 勝者（バナナが増えた人）を探す
+            const winners = results.filter(r => r.isWinner);
+            if (winners.length > 0) {
+                const names = winners.map(w => w.name).join(" & ");
+                title.innerText = `${names} の勝ち！`;
+                title.style.color = "#d35b31";
+            } else {
+                title.innerText = "引き分け / 変動なし";
+                title.style.color = "#777";
+            }
+
+            // 次の親
+            const nextDealer = results.find(r => r.isNextDealer);
+            if (nextDealer) {
+                nextText.innerText = `次は ${nextDealer.name} が親(ボス猿)です`;
+            }
+
+            // 各プレイヤーの増減を表示
+            results.forEach(r => {
+                const row = document.createElement("div");
+                row.className = "round-result-item";
+
+                let diffStr = "";
+                let diffClass = "diff-zero";
+                if (r.bananaDiff > 0) {
+                    diffStr = `+${r.bananaDiff}`;
+                    diffClass = "diff-plus";
+                } else if (r.bananaDiff < 0) {
+                    diffStr = `${r.bananaDiff}`; // マイナスは数値に含まれる
+                    diffClass = "diff-minus";
+                } else {
+                    diffStr = "±0";
+                }
+
+                row.innerHTML = `
+                    <span>${r.name}</span>
+                    <span class="${diffClass}">${diffStr}🍌</span>
+                `;
+                list.appendChild(row);
+            });
+
+            // 表示アニメーション
+            overlay.style.display = "flex";
+            // わずかに遅らせてCSS transitionを発火
+            requestAnimationFrame(() => overlay.classList.add("show"));
+
+            // 一定時間後に非表示
+            setTimeout(() => {
+                overlay.classList.remove("show");
+                setTimeout(() => {
+                    overlay.style.display = "none";
+                    resolve(); // 処理完了を通知
+                }, 500); // フェードアウト待ち
+            }, WAIT_ROUND_RESULT_MS);
+        });
+    }
+
+
+    // ===== 送信 =====
     function sendBet() {
+        const inputEl = document.getElementById("bet-input");
         const amount = parseInt(document.getElementById("bet-input").value);
-        if (!amount || amount <= 0) return;
+
+        if (!amount || amount <= 0) {
+            toast("1本以上のバナナを賭けてください！");
+            return;
+        }
+
+        // lastPlayersData から自分の最新情報を取得
+        const me = lastPlayersData.find(p => p.playerId === myPlayerId);
+
+        if (me) {
+            if (amount > me.ownedBananas) {
+                // 所持数オーバーなら送信せず、警告を出して終了（UIは消さない）
+                toast(`所持バナナが足りません！`);
+                inputEl.value = me.ownedBananas; // 親切に入力値を所持金最大にする
+                return;
+            }
+        }
+
+        betSound.currentTime = 0; // 連打対策（賭けるときのSE）
+        betSound.play().catch(e => console.log("再生エラー:", e));
 
         send({
             phase: "BET",
@@ -284,8 +570,12 @@
     }
 
     function sendRoll() {
+        // ★「止める」＝ ROLL を送る（仕様どおり）
         send({ phase: "ROLL" });
-        document.getElementById("roll-btn").disabled = true;
+
+        // 連打防止（HANDが来たら非表示になる）
+        const btn = document.getElementById("roll-btn");
+        btn.disabled = true;
     }
 
     function send(obj) {
@@ -296,42 +586,74 @@
         }
     }
 
-    // ========== UI 描画関連 ==========
-
-    // ========== 追加: カットイン表示関数 ==========
-    function showCutIn(handName) {
-        const overlay = document.getElementById('cutin-overlay');
-        const img = document.getElementById('monkey-photo');
-        const leftText = document.getElementById('cutin-text-left');
-        const rightText = document.getElementById('cutin-text-right');
-
-        // テキスト設定
-        leftText.innerText = handName;
-        rightText.innerText = handName;
-
-        // 画像設定 (マッピングにない場合は画像非表示)
-        const imgSrc = yakuImages[handName];
-        if (imgSrc) {
-            img.src = imgSrc;
-            img.style.display = "block";
-        } else {
-            img.style.display = "none";
-        }
-
-        // 表示アニメーション
-        overlay.style.display = "flex";
-        requestAnimationFrame(() => {
-            overlay.classList.add("show");
+    // ===== UI =====
+    function preloadYakuImages() {
+        Object.values(yakuImages).forEach(src => {
+            const im = new Image();
+            im.src = src;
         });
-
-        // 3秒後に消す
-        setTimeout(() => {
-            overlay.classList.remove("show");
-            setTimeout(() => {
-                overlay.style.display = "none";
-            }, 300); // transition時間待ち
-        }, 3000);
     }
+    preloadYakuImages();
+
+    /**
+     * カットインを表示し、表示完了後に resolve する（メッセージキューと同期させる）
+     */
+    function showCutInAsync(handName, durationMs = 2600) {
+        return new Promise((resolve) => {
+            const overlay = document.getElementById('cutin-overlay');
+            const img = document.getElementById('monkey-photo');
+            const leftText = document.getElementById('cutin-text-left');
+            const rightText = document.getElementById('cutin-text-right');
+
+            leftText.innerText = handName;
+            rightText.innerText = handName;
+
+            const imgSrc = yakuImages[handName];
+            ///////////////////////////////////////////////
+            //音声ファイルの差し込み
+            ///////////////////////////////////////////////
+            const soundSrc = yakuSounds[handName];
+
+            const startShow = () => {
+                if (soundSrc) {
+                    //音声再生/////////////////////////////////////
+                    const audio = new Audio(soundSrc);
+                    audio.volume = 0.5; // 音量（0.0〜1.0）
+                    audio.play().catch(e => console.error("音声再生エラー:", e));
+                }//ここまで音声再生//////////////////////////////////////////////
+                overlay.style.display = "flex";
+                requestAnimationFrame(() => overlay.classList.add("show"));
+
+                setTimeout(() => {
+                    overlay.classList.remove("show");
+                    setTimeout(() => {
+                        overlay.style.display = "none";
+                        resolve();
+                    }, 1000);
+                }, durationMs);
+            };
+
+            if (imgSrc) {
+                img.style.display = "block";
+
+                // 読み込み完了後に見せる（キャッシュ済みでも onload は発火する）
+                img.onload = startShow;
+                img.onerror = () => {
+                    // 画像が読めなくてもテキスト演出だけは出す
+                    img.style.display = "none";
+                    startShow();
+                };
+
+                img.src = imgSrc;
+            } else {
+                // 対応画像がない役名なら画像は出さずにテキスト演出のみ
+                img.style.display = "none";
+                startShow();
+            }
+        });
+    }
+
+
 
     function renderPlayers(players) {
         const wrapper = document.getElementById("players-wrapper");
@@ -343,18 +665,21 @@
             div.className = "player-card" + (isMe ? " is-me" : "") + (p.dealer ? " is-dealer" : "");
 
             div.innerHTML = `
-                ${p.dealer ? '<div class="dealer-badge">親</div>' : ''}
+                ${p.dealer ? '<div class="dealer-badge">ボスザル</div>' : ''}
                 <div class="info-row">
                     <strong>${p.name}</strong>
                     <span>ID:${p.playerId}</span>
                 </div>
                 <div class="info-row">
-                    <span>所持: ${p.ownedBananas}🍌</span>
+                    <span>所持バナナ: ${p.ownedBananas}🍌</span>
                 </div>
                 <div class="info-row" style="background:#eee; padding:2px;">
-                    <span>賭け: ${p.betBananas}</span>
-                </div>
-                `;
+    <span>賭けバナナ: ${(
+                (p.currentBetBananas ?? p.betBananas ?? 0)
+            )}🍌</span>
+</div>
+
+            `;
             wrapper.appendChild(div);
         });
     }
@@ -377,10 +702,12 @@
         document.getElementById("roll-btn").style.display = "none";
     }
 
+    // ★「止める」ボタン表示（ROLLの playerId が自分のときだけ使う）
     function showRollUI(show) {
         const btn = document.getElementById("roll-btn");
+        // テキストは呼び出し元で制御できるように、ここでは強制変更しない
         btn.style.display = show ? "inline-block" : "none";
-        btn.disabled = !show;
+        btn.disabled = false; // ★ showの時に必ず押せるようにする
         document.getElementById("bet-ui").style.display = "none";
     }
 
@@ -406,12 +733,6 @@
     }
 
     connect();
-
-    function getMyPlayerState(players) {
-        if(!players) return null;
-        return players.find(p => p.playerId === myPlayerId);
-    }
-
 </script>
 </body>
 </html>

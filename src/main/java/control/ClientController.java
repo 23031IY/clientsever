@@ -93,13 +93,15 @@ public class ClientController {
                 case HAND:
                     System.out.println("Check hand");
                     // 役の結果などを表示
+                    updateBattleStatus(msg.players); // 名前・バナナ等の表示更新（任意だが推奨）
+                    battleScreen.showHand(msg);       // 役カットイン表示（BattleScreen側に実装済み）
                     break;
 
                 case RESULT:
                     System.out.println("Game Set!");
                     // 結果画面へ遷移、またはバトル画面で結果ダイアログ
                     transitionToResultScreen();
-                    battleScreen.showMessage("勝負あり！結果を確認してください。");
+                    resultScreen.showResult(msg);     // RESULTデータを画面に反映（ResultScreen側に実装済み）
                     break;
             }
         });
