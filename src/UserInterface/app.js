@@ -1,6 +1,11 @@
 // app.js
 // ★ 接続先は必ず自分のサーバに合わせて変更
-export const CLIENT_SERVER_WS = "ws://localhost:8080/ChinchiroServer/ws";
+//ローカル環境
+//export const CLIENT_SERVER_WS = "ws://localhost:8080/ChinchiroServer/ws";
+
+//ワイのPCをサーバにする
+export const CLIENT_SERVER_WS = "ws://10.17.147.78:8080/ChinchiroServer/ws";
+
 
 let ws = null;
 

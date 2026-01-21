@@ -210,7 +210,8 @@
 
 
 
-    const GAME_SERVER_URL = "ws://localhost:8082/GameServer/ws";
+    //const GAME_SERVER_URL = "ws://localhost:8082/GameServer/ws";
+    const GAME_SERVER_URL = "ws://10.17.147.78:8082/GameServer/ws";
 
     let ws = null;
     let myPlayerId = null;
@@ -233,14 +234,23 @@
         "クロザル": "./sounds/kuro_cry.mp3",
         "ナガ・クロザル": ["./sounds/naga_cry.mp3", "./sounds/kuro_cry.mp3"]
     };
+    ////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////
+    /////////////注意！　音量は0.0 ~ 1.0　に収める（１敗）//////////////
+    //////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////
     const stopSound = new Audio("./sounds/dice_stop.mp3");//サイコロSE
-    stopSound.volume = 0.8;
+    stopSound.volume = 1.0;
 
     const betSound = new Audio("./sounds/monkey_cry.mp3");//賭けるときのSE
     betSound.volume = 1.0;
 
     const roundSound = new Audio("./sounds/round_change.mp3");
-    roundSound.volume = 1.0;
+    roundSound.volume = 0.5;
+
+    const battleBgm = new Audio("./sounds/battle_bgm.mp3");
+    battleBgm.loop = true;   // ループ再生
+    battleBgm.volume = 0.08;
 
 
 
@@ -618,7 +628,7 @@
                 if (soundSrc) {
                     //音声再生/////////////////////////////////////
                     const audio = new Audio(soundSrc);
-                    audio.volume = 0.5; // 音量（0.0〜1.0）
+                    audio.volume = 0.8; // 音量（0.0〜1.0）
                     audio.play().catch(e => console.error("音声再生エラー:", e));
                 }//ここまで音声再生//////////////////////////////////////////////
                 overlay.style.display = "flex";
@@ -732,7 +742,26 @@
         send({ phase: "START" });
     }
 
+    function playBgm() {
+        battleBgm.play().catch(e => {
+            console.log("BGM自動再生がブロックされました。ユーザー操作を待ちます。", e);
+
+            // ユーザーが画面のどこかをクリック（タップ）したら再生開始
+            const startOnInteract = () => {
+                battleBgm.play();
+                // イベントリスナーを削除（1回だけで良いため）
+                document.body.removeEventListener('click', startOnInteract);
+                document.body.removeEventListener('touchstart', startOnInteract);
+            };
+
+            document.body.addEventListener('click', startOnInteract);
+            document.body.addEventListener('touchstart', startOnInteract);
+        });
+    }
+
+    // 実行開始
     connect();
+    playBgm();
 </script>
 </body>
 </html>
